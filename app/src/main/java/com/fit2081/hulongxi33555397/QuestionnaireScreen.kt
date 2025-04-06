@@ -20,8 +20,6 @@ import androidx.navigation.NavController
 import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
-import kotlin.collections.remove
-import kotlin.text.contains
 
 data class Persona(val name: String, val description: String)
 
@@ -83,7 +81,7 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                     IconButton(onClick = { navController.navigate("home") }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = "Back"
                         )
                     }
                 },
@@ -153,9 +151,6 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                                         textAlign = TextAlign.Center
                                     )
                                 }
-                            } else {
-                                // 如果没有足够的项目填满，添加空白
-                                Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                     }
@@ -164,11 +159,24 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 添加人格类别标题
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Text(
+                    text = "Your Persona",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = "People can be broadly classified into 6 different types based on their eating preferences. " +
                         "Click on each button below to find out the different types, and select the type that best fits you!",
                 style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -302,7 +310,7 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
             title = { Text(currentPersona!!.name) },
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // 将占位符替换为实际图片
+                    // 添加人格图片
                     val imageName = currentPersona!!.name.lowercase().replace(" ", "")
                     val resourceId = context.resources.getIdentifier(
                         imageName, "drawable", context.packageName
@@ -337,7 +345,7 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
             }
         )
     }
-} // 缺少的QuestionnaireScreen函数结束括号
+}
 
 @Composable
 fun PersonaButton(

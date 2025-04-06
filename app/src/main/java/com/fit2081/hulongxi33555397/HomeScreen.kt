@@ -25,24 +25,22 @@ fun HomeScreen(navController: NavController) {
     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
 
     val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
-    val userData = loadUserDataFromCsv(userId)
-    val heifaScore = if (userData != null) {
-        if (userData.sex == "Male") userData.heifaTotalScoreMale else userData.heifaTotalScoreFemale
-    } else 50.0f
+    val userData = loadUserDataFromCsv(context, userId)
+    val selectedCategories = prefs.getString("categories", "")?.split(",") ?: emptyList()
 
-    val categoryScores = listOf(
-        CategoryScore("Discretionary", 5f, 10f),
-        CategoryScore("Vegetables", 8f, 10f),
-        CategoryScore("Fruits", 5f, 10f),
-        CategoryScore("Grains", 5f, 10f),
-        CategoryScore("Meat", 10f, 10f),
-        CategoryScore("Dairy", 10f, 10f),
-        CategoryScore("Water", 3f, 5f),
-        CategoryScore("Fats", 4f, 10f),
-        CategoryScore("Sodium", 8f, 10f),
-        CategoryScore("Added Sugars", 7f, 10f),
-        CategoryScore("Alcohol", 5f, 5f)
-    )
+    // 使用实际用户数据计算分数
+    val categoryScores = calculateScoreFromUserData(userData, selectedCategories).map { category ->
+        when (category.name) {
+            "Grains", "Whole grains", "Water", "Alcohol", "Saturated Fat", "Unsaturated Fat" ->
+                CategoryScore(
+                    name = category.name,
+                    score = category.score.coerceAtMost(5f),
+                    maxScore = 5f
+                )
+            else -> category
+        }
+    }
+
     val totalScore = categoryScores.sumOf { it.score.toDouble() }.toFloat()
     val maxTotalScore = 100f
 
