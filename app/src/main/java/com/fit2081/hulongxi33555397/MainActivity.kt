@@ -6,20 +6,20 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FitnessCenter // 替换 SportsCoach
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,9 +36,18 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    // 获取当前导航路由
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route ?: ""
+
+                    // 判断当前页面是否应该显示导航栏
+                    // 只有不是welcome和login页面时才显示导航栏
+                    val shouldShowBottomBar = !currentRoute.startsWith("welcome") &&
+                            !currentRoute.startsWith("login")
+
                     Scaffold(
                         bottomBar = {
-                            if (isLoggedIn) {
+                            if (shouldShowBottomBar) {
                                 BottomNavigationBar(navController)
                             }
                         }
@@ -87,7 +96,7 @@ fun BottomNavigationBar(navController: NavController) {
             onClick = { navController.navigate("insights") }
         )
         NavigationBarItem(
-            icon = { Icon(Icons.Default.FitnessCenter, contentDescription = "NutriCoach") }, // 替换为 FitnessCenter
+            icon = { Icon(Icons.Default.FitnessCenter, contentDescription = "NutriCoach") },
             label = { Text("NutriCoach") },
             selected = currentRoute == "nutricoach",
             onClick = { navController.navigate("nutricoach") }

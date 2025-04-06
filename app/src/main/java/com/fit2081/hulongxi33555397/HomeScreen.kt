@@ -125,6 +125,7 @@ fun HomeScreen(navController: NavController) {
             )
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 修改HomeScreen.kt中的登出按钮点击处理
             Button(
                 onClick = {
                     with(prefs.edit()) {
@@ -132,8 +133,9 @@ fun HomeScreen(navController: NavController) {
                         putBoolean("is_logged_in", false) // 标记未登录
                         apply()
                     }
+                    // 修改导航逻辑，确保回到welcome页面
                     navController.navigate("welcome") {
-                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        popUpTo(0) { inclusive = true } // 清除整个导航栈
                         launchSingleTop = true
                     }
                 },
