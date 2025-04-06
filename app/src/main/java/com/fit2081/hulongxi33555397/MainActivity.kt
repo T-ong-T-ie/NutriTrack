@@ -41,9 +41,10 @@ class MainActivity : ComponentActivity() {
                     val currentRoute = navBackStackEntry?.destination?.route ?: ""
 
                     // 判断当前页面是否应该显示导航栏
-                    // 只有不是welcome和login页面时才显示导航栏
+                    // 只有不是welcome、login和questionnaire页面时才显示导航栏
                     val shouldShowBottomBar = !currentRoute.startsWith("welcome") &&
-                            !currentRoute.startsWith("login")
+                            !currentRoute.startsWith("login") &&
+                            !currentRoute.startsWith("questionnaire")
 
                     Scaffold(
                         bottomBar = {

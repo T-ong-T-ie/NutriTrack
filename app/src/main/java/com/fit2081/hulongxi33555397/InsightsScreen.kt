@@ -25,8 +25,6 @@ fun InsightsScreen(navController: NavController) {
 
     val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
     val selectedCategories = prefs.getString("categories", "None")?.split(",") ?: listOf("None")
-    val persona = prefs.getString("persona", "None") ?: "None"
-    val time = prefs.getString("time", "Not set") ?: "Not set"
 
     val userData = loadUserDataFromCsv(userId)
     val heifaScore = if (userData != null) {
@@ -58,21 +56,12 @@ fun InsightsScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Insights", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("User ID: $userId", style = MaterialTheme.typography.bodyLarge)
-        Spacer(modifier = Modifier.height(8.dp))
-
         Text(
-            text = "Total Score: $totalScore / $maxTotalScore",
-            style = MaterialTheme.typography.bodyLarge,
+            text = "Insights: Food Score",
+            style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Score Breakdown:", style = MaterialTheme.typography.bodyLarge)
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // 对齐显示每个类别的进度条
         categoryScores.forEach { category ->
@@ -86,41 +75,66 @@ fun InsightsScreen(navController: NavController) {
                 Text(
                     text = category.name,
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .width(120.dp) // 固定宽度确保名称对齐
-                        .padding(end = 8.dp)
+                    modifier = Modifier.width(120.dp)
                 )
                 LinearProgressIndicator(
                     progress = progress.coerceIn(0f, 1f),
                     modifier = Modifier
-                        .weight(1f) // 占用剩余空间，确保进度条对齐
+                        .weight(1f)
                         .height(8.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "${category.score}/${category.maxScore}",
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.width(60.dp) // 固定宽度确保分数对齐
+                    modifier = Modifier.width(60.dp)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // 增加类别进度条与总分进度条之间的间距
+        Spacer(modifier = Modifier.height(40.dp))
 
-        Text("Selected Persona: $persona", style = MaterialTheme.typography.bodyMedium)
+        // 总分标题左对齐
+        Text(
+            text = "Total Food Quality Score",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.Start)
+        )
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text("Time: $time", style = MaterialTheme.typography.bodyMedium)
-        Spacer(modifier = Modifier.height(16.dp))
+        // 总分进度条
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LinearProgressIndicator(
+                progress = (totalScore / maxTotalScore).coerceIn(0f, 1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(12.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "$totalScore/$maxTotalScore",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.width(60.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         Button(onClick = {
-            val shareMessage = "Hi, I just got a HEIFA score of $totalScore!"
+            val shareMessage = "Hi, I just got a Food Quality Score of $totalScore/100!"
             val shareIntent = Intent().apply {
                 action = Intent.ACTION_SEND
                 putExtra(Intent.EXTRA_TEXT, shareMessage)
                 type = "text/plain"
             }
-            context.startActivity(Intent.createChooser(shareIntent, "Share your HEIFA Score"))
+            context.startActivity(Intent.createChooser(shareIntent, "Share your Food Quality Score"))
         }) {
             Text("Share")
         }
