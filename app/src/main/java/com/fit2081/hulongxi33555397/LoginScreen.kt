@@ -13,6 +13,7 @@ import androidx.navigation.NavController
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import android.content.Context
+import androidx.compose.material.icons.filled.ArrowBack
 
 data class User(val userId: String, val phoneNumber: String)
 
@@ -48,81 +49,99 @@ fun LoginScreen(navController: NavController) {
     var phoneNumber by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(text = "Login", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        var expanded by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
-        ) {
-            OutlinedTextField(
-                value = selectedId,
-                onValueChange = { },
-                label = { Text("User ID") },
-                readOnly = true,
-                modifier = Modifier.menuAnchor()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Login") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
             )
-            ExposedDropdownMenu(
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // 注意：这里去掉了顶部的 "Login" 文本，因为已经在 TopAppBar 中显示了
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            var expanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
                 expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier
-                    .heightIn(max = 200.dp)
-                    .verticalScroll(rememberScrollState())
+                onExpandedChange = { expanded = !expanded }
             ) {
-                userIds.forEach { id ->
-                    DropdownMenuItem(
-                        text = { Text(id) },
-                        onClick = {
-                            selectedId = id
-                            expanded = false
-                        }
-                    )
+                OutlinedTextField(
+                    value = selectedId,
+                    onValueChange = { },
+                    label = { Text("User ID") },
+                    readOnly = true,
+                    modifier = Modifier.menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier
+                        .heightIn(max = 200.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    userIds.forEach { id ->
+                        DropdownMenuItem(
+                            text = { Text(id) },
+                            onClick = {
+                                selectedId = id
+                                expanded = false
+                            }
+                        )
+                    }
                 }
             }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
-            value = phoneNumber,
-            onValueChange = { phoneNumber = it },
-            label = { Text("Phone Number") }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+            OutlinedTextField(
+                value = phoneNumber,
+                onValueChange = { phoneNumber = it },
+                label = { Text("Phone Number") }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (errorMessage.isNotEmpty()) {
-            Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
+            if (errorMessage.isNotEmpty()) {
+                Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
-        Button(onClick = {
-            val selectedUser = users.find { it.userId == selectedId }
-            if (selectedUser != null && selectedUser.phoneNumber == phoneNumber) {
-                with(prefs.edit()) {
-                    putString("user_id", selectedId)
-                    putBoolean("is_logged_in", true) // 确保保存登录状态
-                    apply()
-                }
-                val hasQuestionnaireData = prefs.contains("categories")
-                if (hasQuestionnaireData) {
-                    navController.navigate("home") {
-                        popUpTo("welcome") { inclusive = true }
+            Button(onClick = {
+                val selectedUser = users.find { it.userId == selectedId }
+                if (selectedUser != null && selectedUser.phoneNumber == phoneNumber) {
+                    with(prefs.edit()) {
+                        putString("user_id", selectedId)
+                        putBoolean("is_logged_in", true)
+                        apply()
+                    }
+                    val hasQuestionnaireData = prefs.contains("categories")
+                    if (hasQuestionnaireData) {
+                        navController.navigate("home") {
+                            popUpTo("welcome") { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate("questionnaire")
                     }
                 } else {
-                    navController.navigate("questionnaire")
+                    errorMessage = "Invalid User ID or Phone Number"
                 }
-            } else {
-                errorMessage = "Invalid User ID or Phone Number"
+            }) {
+                Text("Continue")
             }
-        }) {
-            Text("Continue")
         }
     }
 }
