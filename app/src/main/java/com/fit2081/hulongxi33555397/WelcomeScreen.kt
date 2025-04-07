@@ -26,7 +26,7 @@ fun WelcomeScreen(navController: NavController) {
     ) {
 
         // Add top blank space to shift content down
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(128.dp))
 
         // Top title
         Text(
@@ -42,7 +42,7 @@ fun WelcomeScreen(navController: NavController) {
             painter = painterResource(id = R.drawable.nutritrack_logo),
             contentDescription = "NutriTrack Logo",
             modifier = Modifier
-                .size(180.dp)
+                .size(240.dp)
                 .padding(vertical = 16.dp)
         )
 
