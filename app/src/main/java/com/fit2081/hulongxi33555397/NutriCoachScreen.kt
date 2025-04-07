@@ -26,7 +26,7 @@ fun NutriCoachScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Welcome to NutriCoach", style = MaterialTheme.typography.headlineMedium)
+            Text(text = "NutriCoach Page", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { navController.navigate("home") }) {
                 Text("Back to Home")
