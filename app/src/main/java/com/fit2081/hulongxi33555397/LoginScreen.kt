@@ -15,170 +15,170 @@ import java.io.InputStreamReader
 import android.content.Context
 import androidx.compose.material.icons.filled.ArrowBack
 
-// 定义用户数据的结构体，包含用户 ID 和电话号码
+// Define the structure for user data, including user ID and phone number
 data class User(val userId: String, val phoneNumber: String)
 
-// 从 assets 中的 users.csv 文件加载用户列表的函数
+// Function to load the user list from the users.csv file in assets
 @Composable
 fun loadUsersFromCsv(): List<User> {
-    // 获取当前上下文，用于访问 assets
+    // Get the current context for accessing assets
     val context = LocalContext.current
-    // 创建一个可变列表，用于存储用户数据
+    // Create a mutable list to store user data
     val users = mutableListOf<User>()
     try {
-        // 打开 assets 目录下的 users.csv 文件
+        // Open the users.csv file in the assets directory
         context.assets.open("users.csv").use { inputStream ->
-            // 使用 BufferedReader 读取 CSV 文件内容
+            // Use BufferedReader to read the CSV file content
             BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                // 跳过标题行，逐行读取数据
+                // Skip the header row and read data line by line
                 reader.readLines().drop(1).forEach { line ->
-                    // 将每行按逗号分隔成列
+                    // Split each line into columns by commas
                     val columns = line.split(",")
-                    // 第一列为电话号码，第二列为用户 ID
+                    // The first column is the phone number, the second column is the user ID
                     val phoneNumber = columns[0]
                     val userId = columns[1]
-                    // 创建 User 对象并添加到列表
+                    // Create a User object and add it to the list
                     users.add(User(userId, phoneNumber))
                 }
             }
         }
     } catch (e: Exception) {
-        // 如果读取文件或解析数据时发生异常，打印堆栈跟踪
+        // Print stack trace if an exception occurs while reading the file or parsing data
         e.printStackTrace()
     }
-    // 返回加载的用户列表
+    // Return the loaded user list
     return users
 }
 
-// LoginScreen 是登录页面，允许用户选择 ID 并输入电话号码进行验证
+// LoginScreen is the login page, allowing users to select an ID and enter a phone number for verification
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavController) {
-    // 获取当前上下文，用于访问 SharedPreferences
+    // Get the current context for accessing SharedPreferences
     val context = LocalContext.current
-    // 使用 SharedPreferences 存储用户数据和登录状态
+    // Use SharedPreferences to store user data and login status
     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
-    // 加载用户数据列表
+    // Load the user data list
     val users = loadUsersFromCsv()
-    // 提取所有用户 ID 用于下拉菜单
+    // Extract all user IDs for the dropdown menu
     val userIds = users.map { it.userId }
-    // 使用 remember 保存选中用户 ID 的状态，初始值为提示文本
+    // Use remember to save the selected user ID state, with an initial value as a prompt text
     var selectedId by remember { mutableStateOf("Select User ID") }
-    // 使用 remember 保存输入的电话号码状态
+    // Use remember to save the entered phone number state
     var phoneNumber by remember { mutableStateOf("") }
-    // 使用 remember 保存错误消息状态
+    // Use remember to save the error message state
     var errorMessage by remember { mutableStateOf("") }
 
-    // 使用 Scaffold 管理页面布局，包含顶部栏
+    // Use Scaffold to manage the page layout, including the top bar
     Scaffold(
         topBar = {
-            // 顶部栏，显示标题和返回按钮
+            // Top bar displaying the title and back button
             TopAppBar(
-                title = { Text("Login") }, // 标题为 "Login"
+                title = { Text("Login") }, // Title is "Login"
                 navigationIcon = {
-                    // 返回按钮，点击后返回上一页面
+                    // Back button, navigates to the previous page when clicked
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = androidx.compose.material.icons.Icons.Default.ArrowBack,
-                            contentDescription = "Back" // 无障碍描述
+                            contentDescription = "Back" // Accessibility description
                         )
                     }
                 }
             )
         }
     ) { innerPadding ->
-        // 主内容区域，使用 Column 垂直排列
+        // Main content area, using a Column for vertical arrangement
         Column(
             modifier = Modifier
-                .fillMaxSize() // 填充整个屏幕
-                .padding(innerPadding) // 适配 Scaffold 的内边距
-                .padding(16.dp), // 额外四周 padding 16dp
-            horizontalAlignment = Alignment.CenterHorizontally, // 内容水平居中
-            verticalArrangement = Arrangement.Center // 内容垂直居中
+                .fillMaxSize() // Fill the entire screen
+                .padding(innerPadding) // Adapt to the inner padding of Scaffold
+                .padding(16.dp), // Additional padding of 16dp on all sides
+            horizontalAlignment = Alignment.CenterHorizontally, // Center content horizontally
+            verticalArrangement = Arrangement.Center // Center content vertically
         ) {
-            // 添加 16dp 的垂直间距
+            // Add vertical spacing of 16dp
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 使用 remember 保存下拉菜单的展开状态
+            // Use remember to save the dropdown menu's expanded state
             var expanded by remember { mutableStateOf(false) }
-            // 下拉菜单组件，用于选择用户 ID
+            // Dropdown menu component for selecting a user ID
             ExposedDropdownMenuBox(
                 expanded = expanded,
-                onExpandedChange = { expanded = !expanded } // 点击时切换展开状态
+                onExpandedChange = { expanded = !expanded } // Toggle expanded state on click
             ) {
-                // 显示当前选中的用户 ID，只读
+                // Display the currently selected user ID, read-only
                 OutlinedTextField(
                     value = selectedId,
-                    onValueChange = { }, // 只读，无需处理输入
-                    label = { Text("User ID") }, // 字段标签
-                    readOnly = true, // 设置为只读
-                    modifier = Modifier.menuAnchor() // 作为下拉菜单的锚点
+                    onValueChange = { }, // Read-only, no input handling needed
+                    label = { Text("User ID") }, // Field label
+                    readOnly = true, // Set to read-only
+                    modifier = Modifier.menuAnchor() // Anchor for the dropdown menu
                 )
-                // 下拉菜单内容
+                // Dropdown menu content
                 ExposedDropdownMenu(
                     expanded = expanded,
-                    onDismissRequest = { expanded = false }, // 点击外部时关闭菜单
+                    onDismissRequest = { expanded = false }, // Close menu when clicking outside
                     modifier = Modifier
-                        .heightIn(max = 200.dp) // 最大高度 200dp
-                        .verticalScroll(rememberScrollState()) // 启用垂直滚动
+                        .heightIn(max = 200.dp) // Maximum height of 200dp
+                        .verticalScroll(rememberScrollState()) // Enable vertical scrolling
                 ) {
-                    // 为每个用户 ID 创建菜单项
+                    // Create menu items for each user ID
                     userIds.forEach { id ->
                         DropdownMenuItem(
-                            text = { Text(id) }, // 显示用户 ID
+                            text = { Text(id) }, // Display the user ID
                             onClick = {
-                                selectedId = id // 选中后更新状态
-                                expanded = false // 关闭菜单
+                                selectedId = id // Update state when selected
+                                expanded = false // Close the menu
                             }
                         )
                     }
                 }
             }
 
-            // 添加 16dp 的垂直间距
+            // Add vertical spacing of 16dp
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 输入电话号码的文本字段
+            // Text field for entering the phone number
             OutlinedTextField(
                 value = phoneNumber,
-                onValueChange = { phoneNumber = it }, // 更新输入值
-                label = { Text("Phone Number") } // 字段标签
+                onValueChange = { phoneNumber = it }, // Update the input value
+                label = { Text("Phone Number") } // Field label
             )
 
-            // 添加 16dp 的垂直间距
+            // Add vertical spacing of 16dp
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 如果有错误消息，显示红色文本
+            // If there is an error message, display it in red text
             if (errorMessage.isNotEmpty()) {
                 Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
-                Spacer(modifier = Modifier.height(8.dp)) // 添加 8dp 间距
+                Spacer(modifier = Modifier.height(8.dp)) // Add spacing of 8dp
             }
 
-            // 继续按钮，验证用户输入并导航
+            // Continue button to validate user input and navigate
             Button(onClick = {
-                // 查找匹配选中 ID 的用户
+                // Find the user matching the selected ID
                 val selectedUser = users.find { it.userId == selectedId }
-                // 验证用户 ID 和电话号码是否匹配
+                // Validate if the user ID and phone number match
                 if (selectedUser != null && selectedUser.phoneNumber == phoneNumber) {
                     with(prefs.edit()) {
-                        // 保存用户 ID 和登录状态
+                        // Save the user ID and login status
                         putString("user_id", selectedId)
                         putBoolean("is_logged_in", true)
                         apply()
                     }
-                    // 检查是否已有问卷数据
+                    // Check if questionnaire data already exists
                     val hasQuestionnaireData = prefs.contains("categories")
                     if (hasQuestionnaireData) {
-                        // 如果有问卷数据，导航到首页并清空导航栈至欢迎页面
+                        // If questionnaire data exists, navigate to the home page and clear the navigation stack to the welcome page
                         navController.navigate("home") {
                             popUpTo("welcome") { inclusive = true }
                         }
                     } else {
-                        // 如果无问卷数据，导航到问卷页面
+                        // If no questionnaire data, navigate to the questionnaire page
                         navController.navigate("questionnaire")
                     }
                 } else {
-                    // 如果验证失败，显示错误消息
+                    // If validation fails, display an error message
                     errorMessage = "Invalid User ID or Phone Number"
                 }
             }) {

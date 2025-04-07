@@ -25,10 +25,10 @@ fun WelcomeScreen(navController: NavController) {
         verticalArrangement = Arrangement.SpaceBetween
     ) {
 
-        // 添加顶部空白，整体下移
-        Spacer(modifier = Modifier.weight(0.2f))
+        // Add top blank space to shift content down
+        Spacer(modifier = Modifier.height(32.dp))
 
-        // 顶部标题
+        // Top title
         Text(
             text = "NutriTrack",
             style = MaterialTheme.typography.headlineLarge,
@@ -37,7 +37,7 @@ fun WelcomeScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // 添加logo图片
+        // Add logo image
         Image(
             painter = painterResource(id = R.drawable.nutritrack_logo),
             contentDescription = "NutriTrack Logo",
@@ -48,7 +48,7 @@ fun WelcomeScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 中间的免责声明
+        // Disclaimer in the middle
         Text(
             text = "This app provides general health and nutrition information for " +
                     "educational purposes only. It is not intended as medical advice, " +
@@ -66,7 +66,7 @@ fun WelcomeScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // 登录按钮
+        // Login button
         Button(
             onClick = { navController.navigate("login") },
             modifier = Modifier.fillMaxWidth(0.8f)
@@ -76,7 +76,7 @@ fun WelcomeScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 底部署名
+        // Footer signature
         Text(
             text = "Designed with ❤ by HU LONGXI (33555397)",
             style = MaterialTheme.typography.bodySmall

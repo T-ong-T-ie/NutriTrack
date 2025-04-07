@@ -21,26 +21,26 @@ import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 
-// 定义人格数据结构体，包含名称和描述
+// Define the Persona data structure, including name and description
 data class Persona(val name: String, val description: String)
 
-// QuestionnaireScreen 是食物摄入问卷页面，支持首次填写和编辑模式
+// QuestionnaireScreen is the food intake questionnaire page, supporting both first-time and edit modes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
-    // 获取当前上下文，用于访问 SharedPreferences 和资源
+    // Get the current context for accessing SharedPreferences and resources
     val context = LocalContext.current
-    // 使用 SharedPreferences 存储用户数据
+    // Use SharedPreferences to store user data
     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
-    // 获取用户 ID，默认为 "Unknown"
+    // Get the user ID, defaulting to "Unknown"
     val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
 
-    // 定义可选的食物类别列表
+    // Define the list of selectable food categories
     val foodCategories = listOf("Fruits", "Vegetables", "Grains", "Red Meat", "Seafood", "Poultry", "Fish", "Nuts/Seeds", "Eggs")
-    // 使用 remember 创建可变状态列表，存储选中的食物类别
+    // Use remember to create a mutable state list to store selected food categories
     val selectedCategories = remember { mutableStateListOf<String>() }
 
-    // 定义人格选项列表
+    // Define the list of Persona options
     val personas = listOf(
         Persona("Health Devotee", "I'm passionate about healthy eating & health plays a big part in my life. I use social media to follow active lifestyle personalities or get new recipes/exercise ideas. I may even buy superfoods or follow a particular type of diet. I like to think I am super healthy."),
         Persona("Mindful Eater", "I'm health-conscious and being healthy and eating healthy is important to me. Although health means different things to different people, I make conscious lifestyle decisions about eating based on what I believe healthy means. I look for new recipes and healthy eating information on social media."),
@@ -50,44 +50,44 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
         Persona("Food Carefree", "I'm not bothered about healthy eating. I don't really see the point and I don't think about it. I don't really notice healthy eating tips or recipes and I don't care what I eat.")
     )
 
-    // 使用 remember 保存选中人格的状态
+    // Use remember to save the selected Persona state
     var selectedPersona by remember { mutableStateOf<String?>(null) }
-    // 使用 remember 保存模态框显示状态
+    // Use remember to save the modal dialog display state
     var showModal by remember { mutableStateOf(false) }
-    // 使用 remember 保存当前查看的人格
+    // Use remember to save the currently viewed Persona
     var currentPersona by remember { mutableStateOf<Persona?>(null) }
 
-    // 定义时间相关问题列表
+    // Define the list of time-related questions
     val timeQuestions = listOf(
         "What time of day approx. do you normally eat your biggest meal?",
         "What time of day approx. do you go to sleep at night?",
         "What time of day approx. do you wake up in the morning?"
     )
-    // 使用 remember 创建可变状态列表，存储选中的时间
+    // Use remember to create a mutable state list to store selected times
     val selectedTimes = remember { mutableStateListOf("", "", "") }
-    // 为每个时间问题创建时间选择器状态，初始值为 12:00
+    // Create time picker states for each time question, with an initial value of 12:00
     val timePickerStates = List(3) { rememberTimePickerState(initialHour = 12, initialMinute = 0) }
-    // 使用 remember 保存时间选择器显示状态，-1 表示不显示
+    // Use remember to save the time picker display state, -1 means not displayed
     var showTimePicker by remember { mutableStateOf(-1) }
 
-    // 打印调试信息，显示是否为编辑模式
+    // Print debug information to show whether it is in edit mode
     println("QuestionnaireScreen: isEdit=$isEdit")
 
-    // 如果是编辑模式，加载已有数据
+    // If in edit mode, load existing data
     if (isEdit) {
         LaunchedEffect(Unit) {
             selectedCategories.clear()
-            // 从 SharedPreferences 加载已有食物类别
+            // Load existing food categories from SharedPreferences
             selectedCategories.addAll(prefs.getString("${userId}_categories", "")?.split(",")?.filter { it.isNotEmpty() } ?: emptyList())
-            // 加载已有选中人格
+            // Load the selected Persona
             selectedPersona = prefs.getString("${userId}_persona", null)
-            // 加载已有时间数据
+            // Load existing time data
             selectedTimes[0] = prefs.getString("${userId}_biggest_meal_time", "") ?: ""
             selectedTimes[1] = prefs.getString("${userId}_sleep_time", "") ?: ""
             selectedTimes[2] = prefs.getString("${userId}_wake_time", "") ?: ""
         }
     } else {
-        // 如果不是编辑模式且已有数据，跳转到首页
+        // If not in edit mode and data already exists, navigate to the home page
         LaunchedEffect(Unit) {
             if (prefs.getString("${userId}_categories", null) != null) {
                 println("Existing data found, navigating to home")
@@ -96,69 +96,69 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
         }
     }
 
-    // 使用 Scaffold 管理页面布局，包含顶部栏
+    // Use Scaffold to manage the page layout, including the top bar
     Scaffold(
         topBar = {
-            // 顶部栏，显示标题和返回按钮
+            // Top bar displaying the title and back button
             TopAppBar(
-                title = { Text("Food Intake Questionnaire") }, // 标题
+                title = { Text("Food Intake Questionnaire") }, // Title
                 navigationIcon = {
-                    // 返回按钮，点击后导航到首页
+                    // Back button, navigates to the home page when clicked
                     IconButton(onClick = { navController.navigate("home") }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Back" // 无障碍描述
+                            contentDescription = "Back" // Accessibility description
                         )
                     }
                 },
-                windowInsets = WindowInsets(0, 0, 0, 0) // 无额外边距
+                windowInsets = WindowInsets(0, 0, 0, 0) // No additional margins
             )
         },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0) // 内容区域无额外边距
+        contentWindowInsets = WindowInsets(0, 0, 0, 0) // No additional margins for content area
     ) { innerPadding ->
-        // 主内容区域，使用 Column 垂直排列
+        // Main content area, using a Column for vertical arrangement
         Column(
             modifier = Modifier
-                .fillMaxSize() // 填充整个屏幕
-                .padding(innerPadding) // 适配 Scaffold 的内边距
-                .padding(horizontal = 16.dp) // 左右 padding 16dp
-                .verticalScroll(rememberScrollState()), // 启用垂直滚动
-            horizontalAlignment = Alignment.CenterHorizontally // 内容水平居中
+                .fillMaxSize() // Fill the entire screen
+                .padding(innerPadding) // Adapt to the inner padding of Scaffold
+                .padding(horizontal = 16.dp) // Horizontal padding of 16dp
+                .verticalScroll(rememberScrollState()), // Enable vertical scrolling
+            horizontalAlignment = Alignment.CenterHorizontally // Center content horizontally
         ) {
-            // 食物类别标题
+            // Food category title
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start // 左对齐
+                horizontalArrangement = Arrangement.Start // Align to the left
             ) {
                 Text(
                     text = "Tick all the food categories you can eat",
-                    style = MaterialTheme.typography.bodyLarge, // 大正文样式
-                    fontWeight = FontWeight.Bold, // 加粗
-                    modifier = Modifier.align(Alignment.CenterVertically) // 垂直居中
+                    style = MaterialTheme.typography.bodyLarge, // Large body style
+                    fontWeight = FontWeight.Bold, // Bold
+                    modifier = Modifier.align(Alignment.CenterVertically) // Vertically center
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp)) // 添加 8dp 间距
+            Spacer(modifier = Modifier.height(8.dp)) // Add 8dp spacing
 
-            // 3x3 布局的食物类别选择器
+            // 3x3 layout for food category selectors
             Column(modifier = Modifier.fillMaxWidth()) {
-                for (i in 0 until 3) { // 3 行
+                for (i in 0 until 3) { // 3 rows
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween // 均匀分布
+                        horizontalArrangement = Arrangement.SpaceBetween // Distribute evenly
                     ) {
-                        // 每行 3 个选项
+                        // Each row has 3 options
                         for (j in 0 until 3) {
                             val index = i * 3 + j
                             if (index < foodCategories.size) {
                                 val category = foodCategories[index]
                                 Column(
                                     modifier = Modifier
-                                        .weight(1f) // 平均分配宽度
-                                        .padding(4.dp) // 四周 padding 4dp
+                                        .weight(1f) // Distribute width evenly
+                                        .padding(4.dp) // Padding of 4dp on all sides
                                         .selectable(
                                             selected = selectedCategories.contains(category),
                                             onClick = {
-                                                // 点击切换选中状态
+                                                // Toggle selection state on click
                                                 if (selectedCategories.contains(category)) {
                                                     selectedCategories.remove(category)
                                                 } else {
@@ -166,17 +166,17 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                                                 }
                                             }
                                         )
-                                        .padding(4.dp), // 额外 padding
-                                    horizontalAlignment = Alignment.CenterHorizontally // 居中
+                                        .padding(4.dp), // Additional padding
+                                    horizontalAlignment = Alignment.CenterHorizontally // Center horizontally
                                 ) {
                                     Checkbox(
                                         checked = selectedCategories.contains(category),
-                                        onCheckedChange = null // 由 selectable 处理
+                                        onCheckedChange = null // Handled by selectable
                                     )
                                     Text(
                                         text = category,
-                                        style = MaterialTheme.typography.bodyMedium, // 中等正文样式
-                                        textAlign = TextAlign.Center // 文本居中
+                                        style = MaterialTheme.typography.bodyMedium, // Medium body style
+                                        textAlign = TextAlign.Center // Center text
                                     )
                                 }
                             }
@@ -185,40 +185,40 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp)) // 添加 16dp 间距
+            Spacer(modifier = Modifier.height(16.dp)) // Add 16dp spacing
 
-            // 人格类别标题
+            // Persona category title
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start // 左对齐
+                horizontalArrangement = Arrangement.Start // Align to the left
             ) {
                 Text(
                     text = "Your Persona",
-                    style = MaterialTheme.typography.bodyLarge, // 大正文样式
-                    fontWeight = FontWeight.Bold, // 加粗
-                    modifier = Modifier.align(Alignment.CenterVertically) // 垂直居中
+                    style = MaterialTheme.typography.bodyLarge, // Large body style
+                    fontWeight = FontWeight.Bold, // Bold
+                    modifier = Modifier.align(Alignment.CenterVertically) // Vertically center
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp)) // 添加 8dp 间距
+            Spacer(modifier = Modifier.height(8.dp)) // Add 8dp spacing
 
-            // 人格说明文本
+            // Persona description text
             Text(
                 text = "People can be broadly classified into 6 different types based on their eating preferences. " +
                         "Click on each button below to find out the different types, and select the type that best fits you!",
-                style = MaterialTheme.typography.bodyMedium, // 中等正文样式
-                modifier = Modifier.padding(bottom = 8.dp) // 自定义 padding
+                style = MaterialTheme.typography.bodyMedium, // Medium body style
+                modifier = Modifier.padding(bottom = 8.dp) // Custom padding
             )
-            Spacer(modifier = Modifier.height(8.dp)) // 添加 8dp 间距
+            Spacer(modifier = Modifier.height(8.dp)) // Add 8dp spacing
 
-            // 3x2 布局的人格按钮
+            // 3x2 layout for Persona buttons
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp) // 每行间距 8dp
+                verticalArrangement = Arrangement.spacedBy(8.dp) // 8dp spacing between rows
             ) {
                 for (i in 0 until 3) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp) // 每列间距 8dp
+                        horizontalArrangement = Arrangement.spacedBy(8.dp) // 8dp spacing between columns
                     ) {
                         val persona1 = personas[i * 2]
                         val persona2 = personas[i * 2 + 1]
@@ -226,10 +226,10 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                             persona = persona1,
                             isSelected = selectedPersona == persona1.name,
                             onClick = {
-                                currentPersona = persona1 // 设置当前查看的人格
-                                showModal = true // 显示模态框
+                                currentPersona = persona1 // Set the currently viewed Persona
+                                showModal = true // Show the modal dialog
                             },
-                            modifier = Modifier.weight(1f) // 平均分配宽度
+                            modifier = Modifier.weight(1f) // Distribute width evenly
                         )
                         PersonaButton(
                             persona = persona2,
@@ -243,60 +243,60 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp)) // 添加 16dp 间距
+            Spacer(modifier = Modifier.height(16.dp)) // Add 16dp spacing
 
-            // 时间问题标题
+            // Timing questions title
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start // 左对齐
+                horizontalArrangement = Arrangement.Start // Align to the left
             ) {
                 Text(
                     text = "Timing",
-                    style = MaterialTheme.typography.bodyLarge, // 大正文样式
-                    fontWeight = FontWeight.Bold, // 加粗
-                    modifier = Modifier.align(Alignment.CenterVertically) // 垂直居中
+                    style = MaterialTheme.typography.bodyLarge, // Large body style
+                    fontWeight = FontWeight.Bold, // Bold
+                    modifier = Modifier.align(Alignment.CenterVertically) // Vertically center
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp)) // 添加 8dp 间距
+            Spacer(modifier = Modifier.height(8.dp)) // Add 8dp spacing
 
-            // 显示时间问题和选择按钮
+            // Display timing questions and selection buttons
             timeQuestions.forEachIndexed { index, question ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp), // 上下 padding 4dp
-                    verticalAlignment = Alignment.CenterVertically // 垂直居中
+                        .padding(vertical = 4.dp), // Vertical padding of 4dp
+                    verticalAlignment = Alignment.CenterVertically // Vertically center
                 ) {
                     Text(
                         text = question,
-                        style = MaterialTheme.typography.bodyMedium, // 中等正文样式
+                        style = MaterialTheme.typography.bodyMedium, // Medium body style
                         modifier = Modifier
-                            .weight(1f) // 占用剩余空间
-                            .padding(end = 8.dp) // 右 padding 8dp
+                            .weight(1f) // Occupy remaining space
+                            .padding(end = 8.dp) // Right padding of 8dp
                     )
                     Button(
-                        onClick = { showTimePicker = index }, // 显示对应时间选择器
+                        onClick = { showTimePicker = index }, // Show the corresponding time picker
                         modifier = Modifier
-                            .width(100.dp) // 固定宽度 100dp
+                            .width(100.dp) // Fixed width of 100dp
                     ) {
                         Text(
-                            text = selectedTimes[index].ifEmpty { "Select" }, // 显示选中时间或提示
-                            textAlign = TextAlign.Center // 文本居中
+                            text = selectedTimes[index].ifEmpty { "Select" }, // Display selected time or prompt
+                            textAlign = TextAlign.Center // Center text
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp)) // 添加 16dp 间距
+            Spacer(modifier = Modifier.height(16.dp)) // Add 16dp spacing
 
-            // 提交按钮
+            // Submit button
             Button(onClick = {
-                // 打印调试信息
+                // Print debug information
                 println("Submit clicked: categories=$selectedCategories, persona=$selectedPersona, times=$selectedTimes")
-                // 检查所有字段是否已填写
+                // Check if all fields are filled
                 if (selectedCategories.isNotEmpty() && selectedPersona != null && selectedTimes.all { it.isNotEmpty() }) {
                     with(prefs.edit()) {
-                        // 保存用户选择的食物类别、人格和时间
+                        // Save the user's selected food categories, Persona, and times
                         putString("${userId}_categories", selectedCategories.joinToString(","))
                         putString("${userId}_persona", selectedPersona)
                         putString("${userId}_biggest_meal_time", selectedTimes[0])
@@ -305,10 +305,10 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                         apply()
                     }
                     println("Navigating to home from Submit")
-                    // 导航到首页
+                    // Navigate to the home page
                     navController.navigate("home")
                 } else {
-                    // 如果填写不完整，打印失败原因
+                    // If not fully filled, print the failure reason
                     println("Submit failed: categories=${selectedCategories.isEmpty()}, persona=$selectedPersona, times=${selectedTimes.any { it.isEmpty() }}")
                 }
             }) {
@@ -317,22 +317,22 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
         }
     }
 
-    // 显示时间选择器对话框
+    // Display the time picker dialog
     if (showTimePicker >= 0) {
         AlertDialog(
-            onDismissRequest = { showTimePicker = -1 }, // 点击外部关闭
-            title = { Text(timeQuestions[showTimePicker]) }, // 显示对应问题
+            onDismissRequest = { showTimePicker = -1 }, // Close when clicking outside
+            title = { Text(timeQuestions[showTimePicker]) }, // Display the corresponding question
             text = {
-                // 时间选择器组件
+                // Time picker component
                 TimePicker(state = timePickerStates[showTimePicker])
             },
             confirmButton = {
                 TextButton(onClick = {
-                    // 格式化选中时间为 HH:MM
+                    // Format the selected time as HH:MM
                     val hour = timePickerStates[showTimePicker].hour.toString().padStart(2, '0')
                     val minute = timePickerStates[showTimePicker].minute.toString().padStart(2, '0')
                     selectedTimes[showTimePicker] = "$hour:$minute"
-                    showTimePicker = -1 // 关闭对话框
+                    showTimePicker = -1 // Close the dialog
                 }) {
                     Text("Confirm")
                 }
@@ -345,14 +345,14 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
         )
     }
 
-    // 显示人格详情模态框
+    // Display the Persona details modal dialog
     if (showModal && currentPersona != null) {
         AlertDialog(
-            onDismissRequest = { showModal = false }, // 点击外部关闭
-            title = { Text(currentPersona!!.name) }, // 显示人格名称
+            onDismissRequest = { showModal = false }, // Close when clicking outside
+            title = { Text(currentPersona!!.name) }, // Display the Persona name
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // 根据人格名称动态加载图片
+                    // Dynamically load the image based on the Persona name
                     val imageName = currentPersona!!.name.lowercase().replace(" ", "")
                     val resourceId = context.resources.getIdentifier(
                         imageName, "drawable", context.packageName
@@ -360,21 +360,21 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
 
                     Image(
                         painter = painterResource(id = resourceId),
-                        contentDescription = currentPersona!!.name, // 无障碍描述
+                        contentDescription = currentPersona!!.name, // Accessibility description
                         modifier = Modifier
-                            .size(100.dp) // 图片大小 100dp
-                            .border(1.dp, MaterialTheme.colorScheme.onSurface) // 添加边框
+                            .size(100.dp) // Image size of 100dp
+                            .border(1.dp, MaterialTheme.colorScheme.onSurface) // Add border
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp)) // 添加 8dp 间距
-                    Text(currentPersona!!.description, textAlign = TextAlign.Center) // 显示人格描述
+                    Spacer(modifier = Modifier.height(8.dp)) // Add 8dp spacing
+                    Text(currentPersona!!.description, textAlign = TextAlign.Center) // Display Persona description
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        selectedPersona = currentPersona!!.name // 选中人格
-                        showModal = false // 关闭对话框
+                        selectedPersona = currentPersona!!.name // Select the Persona
+                        showModal = false // Close the dialog
                     }
                 ) {
                     Text("Select")
@@ -389,7 +389,7 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
     }
 }
 
-// PersonaButton 是自定义组件，用于显示人格按钮并支持选中状态
+// PersonaButton is a custom component for displaying Persona buttons with support for selected state
 @Composable
 fun PersonaButton(
     persona: Persona,
@@ -397,35 +397,35 @@ fun PersonaButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 定义椭圆形状的按钮样式
+    // Define the button style with a rounded shape
     val buttonShape = RoundedCornerShape(50)
 
     Box(
         modifier = modifier.fillMaxWidth()
     ) {
-        // 如果选中，显示外层边框
+        // If selected, display an outer border
         if (isSelected) {
             Box(
                 modifier = Modifier
-                    .matchParentSize() // 与按钮同大小
-                    .padding(1.dp) // 边框向外延伸
+                    .matchParentSize() // Match the button size
+                    .padding(1.dp) // Extend the border outward
                     .border(
                         width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary, // 主色边框
+                        color = MaterialTheme.colorScheme.primary, // Primary color border
                         shape = buttonShape
                     )
             )
         }
 
-        // 内层按钮
+        // Inner button
         Button(
             onClick = onClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(1.dp), // 缩小以显示边框
-            shape = buttonShape // 椭圆形状
+                .padding(1.dp), // Shrink to show the border
+            shape = buttonShape // Rounded shape
         ) {
-            Text(persona.name) // 显示人格名称
+            Text(persona.name) // Display the Persona name
         }
     }
 }
