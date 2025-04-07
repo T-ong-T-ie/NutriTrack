@@ -72,7 +72,6 @@ fun LoginScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // 注意：这里去掉了顶部的 "Login" 文本，因为已经在 TopAppBar 中显示了
 
             Spacer(modifier = Modifier.height(16.dp))
 

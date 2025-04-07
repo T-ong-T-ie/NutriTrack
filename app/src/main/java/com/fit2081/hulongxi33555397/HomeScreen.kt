@@ -26,22 +26,11 @@ fun HomeScreen(navController: NavController) {
 
     val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
     val userData = loadUserDataFromCsv(context, userId)
-    val selectedCategories = prefs.getString("categories", "")?.split(",") ?: emptyList()
+    val selectedCategories = prefs.getString("${userId}_categories", "")?.split(",") ?: emptyList()
 
     // 使用实际用户数据计算分数
-    val categoryScores = calculateScoreFromUserData(userData, selectedCategories).map { category ->
-        when (category.name) {
-            "Grains", "Whole grains", "Water", "Alcohol", "Saturated Fat", "Unsaturated Fat" ->
-                CategoryScore(
-                    name = category.name,
-                    score = category.score.coerceAtMost(5f),
-                    maxScore = 5f
-                )
-            else -> category
-        }
-    }
-
-    val totalScore = categoryScores.sumOf { it.score.toDouble() }.toFloat()
+    val isMale = userData?.sex == "Male"
+    val totalScore = if (isMale) userData?.heifaTotalScoreMale ?: 0f else userData?.heifaTotalScoreFemale ?: 0f
     val maxTotalScore = 100f
 
     Scaffold(
@@ -130,7 +119,7 @@ fun HomeScreen(navController: NavController) {
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = "$totalScore/100",
+                    text = "${totalScore.format(2)}/100",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color(0xFF006400) // 正确的深绿色声明
                 )
@@ -159,8 +148,8 @@ fun HomeScreen(navController: NavController) {
             Button(
                 onClick = {
                     with(prefs.edit()) {
-                        clear()
-                        putBoolean("is_logged_in", false)
+                        // 不再使用clear()，而是只移除登录状态
+                        remove("is_logged_in")
                         apply()
                     }
                     navController.navigate("welcome") {

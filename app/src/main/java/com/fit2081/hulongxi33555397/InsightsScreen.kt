@@ -14,8 +14,6 @@ import androidx.navigation.NavController
 import android.content.Context
 import android.content.Intent
 import androidx.compose.ui.graphics.Color
-import kotlin.compareTo
-import kotlin.div
 
 data class CategoryScore(
     val name: String,
@@ -29,25 +27,95 @@ fun InsightsScreen(navController: NavController) {
     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
 
     val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
-    val selectedCategories = prefs.getString("categories", "")?.split(",") ?: emptyList()
-
     val userData = loadUserDataFromCsv(context, userId)
+    val isMale = userData?.sex == "Male"
 
-    // 调整部分类别的最大分数为5分，使用修改版的得分计算函数
-    val categoryScores = calculateScoreFromUserData(userData, selectedCategories).map { category ->
-        when (category.name) {
-            "Grains", "Whole grains", "Water", "Alcohol", "Saturated Fat", "Unsaturated Fat" ->
-                CategoryScore(
-                    name = category.name,
-                    score = category.score.coerceAtMost(5f),
-                    maxScore = 5f
-                )
-            else -> category
-        }
+    // 直接从用户数据中获取各类别分数
+    val categoryScores = mutableListOf<CategoryScore>()
+
+    userData?.let { data ->
+        // 添加所有食物类别的得分
+        categoryScores.add(CategoryScore(
+            name = "Discretionary",
+            score = if (isMale) data.DiscretionaryHEIFAscoreMale else data.DiscretionaryHEIFAscoreFemale,
+            maxScore = 10f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Vegetables",
+            score = if (isMale) data.VegetablesHEIFAscoreMale else data.VegetablesHEIFAscoreFemale,
+            maxScore = 10f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Fruits",
+            score = if (isMale) data.FruitHEIFAscoreMale else data.FruitHEIFAscoreFemale,
+            maxScore = 10f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Grains & Cereals",
+            score = if (isMale) data.GrainsandcerealsHEIFAscoreMale else data.GrainsandcerealsHEIFAscoreFemale,
+            maxScore = 5f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Whole Grains",
+            score = if (isMale) data.WholegrainsHEIFAscoreMale else data.WholegrainsHEIFAscoreFemale,
+            maxScore = 5f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Meat & Alternatives",
+            score = if (isMale) data.MeatandalternativesHEIFAscoreMale else data.MeatandalternativesHEIFAscoreFemale,
+            maxScore = 10f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Dairy & Alternatives",
+            score = if (isMale) data.DairyandalternativesHEIFAscoreMale else data.DairyandalternativesHEIFAscoreFemale,
+            maxScore = 10f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Sodium",
+            score = if (isMale) data.SodiumHEIFAscoreMale else data.SodiumHEIFAscoreFemale,
+            maxScore = 10f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Alcohol",
+            score = if (isMale) data.AlcoholHEIFAscoreMale else data.AlcoholHEIFAscoreFemale,
+            maxScore = 5f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Water",
+            score = if (isMale) data.WaterHEIFAscoreMale else data.WaterHEIFAscoreFemale,
+            maxScore = 5f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Added Sugar",
+            score = if (isMale) data.SugarHEIFAscoreMale else data.SugarHEIFAscoreFemale,
+            maxScore = 10f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Saturated Fat",
+            score = if (isMale) data.SaturatedFatHEIFAscoreMale else data.SaturatedFatHEIFAscoreFemale,
+            maxScore = 5f
+        ))
+
+        categoryScores.add(CategoryScore(
+            name = "Unsaturated Fat",
+            score = if (isMale) data.UnsaturatedFatHEIFAscoreMale else data.UnsaturatedFatHEIFAscoreFemale,
+            maxScore = 5f
+        ))
     }
 
-    // 计算总分
-    val totalScore = categoryScores.sumOf { it.score.toDouble() }.toFloat()
+    // 直接使用 CSV 中的总分值
+    val totalScore = if (isMale) userData?.heifaTotalScoreMale ?: 0f else userData?.heifaTotalScoreFemale ?: 0f
     val maxTotalScore = 100f
 
     Column(
@@ -96,7 +164,7 @@ fun InsightsScreen(navController: NavController) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "${category.score}/${category.maxScore}",
+                    text = "${category.score.format(2)}/${category.maxScore.toInt()}",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.width(60.dp)
                 )
@@ -131,7 +199,7 @@ fun InsightsScreen(navController: NavController) {
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "$totalScore/$maxTotalScore",
+                text = "${totalScore.format(2)}/$maxTotalScore",
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.width(60.dp)
             )
@@ -140,7 +208,7 @@ fun InsightsScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(onClick = {
-            val shareMessage = "Hi, I just got a Food Quality Score of $totalScore/$maxTotalScore!"
+            val shareMessage = "Hi, I just got a Food Quality Score of ${totalScore.format(2)}/$maxTotalScore!"
             val shareIntent = Intent().apply {
                 action = Intent.ACTION_SEND
                 putExtra(Intent.EXTRA_TEXT, shareMessage)
@@ -158,3 +226,6 @@ fun InsightsScreen(navController: NavController) {
         }
     }
 }
+
+// 用于格式化浮点数的扩展函数，修改为两位小数
+fun Float.format(digits: Int) = "%.${digits}f".format(this)

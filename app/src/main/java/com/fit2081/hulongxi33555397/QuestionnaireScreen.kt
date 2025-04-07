@@ -28,6 +28,8 @@ data class Persona(val name: String, val description: String)
 fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
+    val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
+
     val foodCategories = listOf("Fruits", "Vegetables", "Grains", "Red Meat", "Seafood", "Poultry", "Fish", "Nuts/Seeds", "Eggs")
     val selectedCategories = remember { mutableStateListOf<String>() }
 
@@ -58,15 +60,15 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
     if (isEdit) {
         LaunchedEffect(Unit) {
             selectedCategories.clear()
-            selectedCategories.addAll(prefs.getString("categories", "")?.split(",")?.filter { it.isNotEmpty() } ?: emptyList())
-            selectedPersona = prefs.getString("persona", null)
-            selectedTimes[0] = prefs.getString("biggest_meal_time", "") ?: ""
-            selectedTimes[1] = prefs.getString("sleep_time", "") ?: ""
-            selectedTimes[2] = prefs.getString("wake_time", "") ?: ""
+            selectedCategories.addAll(prefs.getString("${userId}_categories", "")?.split(",")?.filter { it.isNotEmpty() } ?: emptyList())
+            selectedPersona = prefs.getString("${userId}_persona", null)
+            selectedTimes[0] = prefs.getString("${userId}_biggest_meal_time", "") ?: ""
+            selectedTimes[1] = prefs.getString("${userId}_sleep_time", "") ?: ""
+            selectedTimes[2] = prefs.getString("${userId}_wake_time", "") ?: ""
         }
     } else {
         LaunchedEffect(Unit) {
-            if (prefs.getString("categories", null) != null) {
+            if (prefs.getString("${userId}_categories", null) != null) {
                 println("Existing data found, navigating to home")
                 navController.navigate("home")
             }
@@ -261,11 +263,11 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                 println("Submit clicked: categories=$selectedCategories, persona=$selectedPersona, times=$selectedTimes")
                 if (selectedCategories.isNotEmpty() && selectedPersona != null && selectedTimes.all { it.isNotEmpty() }) {
                     with(prefs.edit()) {
-                        putString("categories", selectedCategories.joinToString(","))
-                        putString("persona", selectedPersona)
-                        putString("biggest_meal_time", selectedTimes[0])
-                        putString("sleep_time", selectedTimes[1])
-                        putString("wake_time", selectedTimes[2])
+                        putString("${userId}_categories", selectedCategories.joinToString(","))
+                        putString("${userId}_persona", selectedPersona)
+                        putString("${userId}_biggest_meal_time", selectedTimes[0])
+                        putString("${userId}_sleep_time", selectedTimes[1])
+                        putString("${userId}_wake_time", selectedTimes[2])
                         apply()
                     }
                     println("Navigating to home from Submit")
@@ -354,19 +356,36 @@ fun PersonaButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Button(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .then(
-                if (isSelected) Modifier.border(
-                    width = 2.dp,
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = RoundedCornerShape(4.dp)
-                ) else Modifier
-            ),
-        shape = RoundedCornerShape(4.dp)
+    // 使用 RoundedCornerShape 的 50% 值来创建椭圆形状
+    val buttonShape = RoundedCornerShape(50)
+
+    Box(
+        modifier = modifier.fillMaxWidth()
     ) {
-        Text(persona.name)
+        // 使用嵌套的按钮和边框布局
+        if (isSelected) {
+            // 外层边框容器
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(1.dp) // 边框向外延伸的空间
+                    .border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = buttonShape
+                    )
+            )
+        }
+
+        // 内层按钮
+        Button(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(1.dp), // 按钮稍微缩小，使边框可见
+            shape = buttonShape
+        ) {
+            Text(persona.name)
+        }
     }
 }

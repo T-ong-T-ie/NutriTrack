@@ -30,7 +30,17 @@ class MainActivity : ComponentActivity() {
             val prefs = context.getSharedPreferences("NutriTrackPrefs", MODE_PRIVATE)
             val isLoggedIn = prefs.getBoolean("is_logged_in", false)
 
-            val startDestination = if (isLoggedIn) "home" else "welcome"
+            // MainActivity.kt 中需要修改的部分
+            val startDestination = if (isLoggedIn) {
+                val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
+                if (prefs.getString("${userId}_categories", null) != null) {
+                    "home"
+                } else {
+                    "questionnaire"
+                }
+            } else {
+                "welcome"
+            }
 
             MaterialTheme {
                 Surface(
