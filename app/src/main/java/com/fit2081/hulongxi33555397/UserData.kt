@@ -44,26 +44,19 @@ data class UserData(
 // Function to load user data from the users.csv file in assets
 fun loadUserDataFromCsv(context: Context, userId: String): UserData? {
     try {
-        // Open the users.csv file in the assets directory
         context.assets.open("users.csv").use { inputStream ->
-            // Use BufferedReader to read the CSV file content
             BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                // Read the first line (header row) and split by commas to create a mapping of column names to indices
                 val headers = reader.readLine().split(",")
                 val columnMap = headers.withIndex().associate { it.value to it.index }
 
                 var line: String?
                 // Read the file line by line
                 while (reader.readLine().also { line = it } != null) {
-                    // Split the current line into columns by commas
                     val columns = line?.split(",") ?: continue
-                    // Skip the line if the number of columns is insufficient
                     if (columns.size < columnMap.size) continue
 
-                    // Get the user ID from the current line and trim whitespace
                     val currentUserId = columns[columnMap["User_ID"] ?: 1].trim()
 
-                    // If the user ID matches, construct and return a UserData object
                     if (currentUserId == userId) {
                         return UserData(
                             userId = currentUserId,

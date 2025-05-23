@@ -27,14 +27,10 @@ data class CategoryScore(
 fun InsightsScreen(navController: NavController) {
     // Get the current context for accessing SharedPreferences and launching Intents
     val context = LocalContext.current
-    // Use SharedPreferences to store user data
     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
 
-    // Get the user ID, defaulting to "Unknown"
     val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
-    // Load user data from a CSV file
     val userData = loadUserDataFromCsv(context, userId)
-    // Determine if the user is male
     val isMale = userData?.sex == "Male"
 
     // Create a mutable list to store category scores
@@ -42,7 +38,6 @@ fun InsightsScreen(navController: NavController) {
 
     // If user data exists, populate the categoryScores list
     userData?.let { data ->
-        // Add the "Discretionary" category score
         categoryScores.add(CategoryScore(
             name = "Discretionary",
             score = if (isMale) data.DiscretionaryHEIFAscoreMale else data.DiscretionaryHEIFAscoreFemale,
@@ -142,27 +137,23 @@ fun InsightsScreen(navController: NavController) {
     // Main content area, using a Column for vertical arrangement
     Column(
         modifier = Modifier
-            .fillMaxSize() // Fill the entire screen
-            .verticalScroll(rememberScrollState()) // Enable vertical scrolling
-            .padding(16.dp), // Padding of 16dp on all sides
-        horizontalAlignment = Alignment.CenterHorizontally, // Center content horizontally
-        verticalArrangement = Arrangement.Top // Arrange content from the top
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
     ) {
         // Page title
         Text(
             text = "Insights: Food Score",
-            style = MaterialTheme.typography.headlineMedium, // Medium headline style
+            style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold // Bold
         )
 
-        // Add vertical spacing of 24dp
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Iterate and display progress bars for each category
         categoryScores.forEach { category ->
-            // Calculate the score percentage
             val scorePercentage = (category.score / category.maxScore)
-            // Choose the progress bar color based on the score percentage
             val scoreColor = when {
                 scorePercentage >= 0.8f -> Color(0xFF006400) // Dark green for high scores
                 scorePercentage >= 0.6f -> Color(0xFF90EE90) // Light green for medium-high scores
@@ -170,71 +161,67 @@ fun InsightsScreen(navController: NavController) {
                 else -> Color(0xFFFF6347) // Red for low scores
             }
 
-            // Horizontal layout for category name, progress bar, and score
             Row(
                 modifier = Modifier
-                    .fillMaxWidth() // Fill the width
-                    .padding(vertical = 4.dp), // Vertical padding of 4dp for alignment
-                verticalAlignment = Alignment.CenterVertically // Center vertically
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = category.name,
                     style = MaterialTheme.typography.bodyMedium, // Medium body style
-                    modifier = Modifier.width(150.dp) // Fixed width for alignment
+                    modifier = Modifier.width(150.dp)
                 )
                 LinearProgressIndicator(
-                    progress = (category.score / category.maxScore).coerceIn(0f, 1f), // Progress value limited to 0-1
+                    progress = (category.score / category.maxScore).coerceIn(0f, 1f),
                     modifier = Modifier
-                        .weight(1f) // Occupy remaining space
-                        .height(8.dp), // Progress bar height of 8dp
-                    color = scoreColor // Set color based on score
+                        .weight(1f)
+                        .height(8.dp),
+                    color = scoreColor
                 )
-                Spacer(modifier = Modifier.width(8.dp)) // Add horizontal spacing of 8dp
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "${category.score.format(2)}/${category.maxScore.toInt()}", // Display score with two decimals
-                    style = MaterialTheme.typography.bodySmall, // Small body style
-                    modifier = Modifier.width(60.dp) // Fixed width for alignment
+                    text = "${category.score.format(2)}/${category.maxScore.toInt()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.width(60.dp)
                 )
             }
         }
 
-        // Add vertical spacing of 40dp to separate categories and total score
         Spacer(modifier = Modifier.height(40.dp))
 
         // Total score title, left-aligned
         Text(
             text = "Total Food Quality Score",
-            style = MaterialTheme.typography.titleLarge, // Large title style
-            fontWeight = FontWeight.Bold, // Bold
-            modifier = Modifier.align(Alignment.Start) // Align to the left
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.Start)
         )
 
-        // Add vertical spacing of 8dp
         Spacer(modifier = Modifier.height(8.dp))
 
         // Total score progress bar and value
         Row(
             modifier = Modifier
-                .fillMaxWidth() // Fill the width
-                .padding(vertical = 4.dp), // Vertical padding of 4dp
-            verticalAlignment = Alignment.CenterVertically // Center vertically
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             LinearProgressIndicator(
-                progress = (totalScore / maxTotalScore).coerceIn(0f, 1f), // Total score progress, limited to 0-1
+                progress = (totalScore / maxTotalScore).coerceIn(0f, 1f),
                 modifier = Modifier
-                    .weight(1f) // Occupy remaining space
-                    .height(12.dp), // Progress bar height of 12dp
-                color = Color(0xFF006400) // Fixed dark green color
+                    .weight(1f)
+                    .height(12.dp),
+                color = Color(0xFF006400)
             )
-            Spacer(modifier = Modifier.width(8.dp)) // Add horizontal spacing of 8dp
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "${totalScore.format(2)}/$maxTotalScore", // Display total score with two decimals
-                style = MaterialTheme.typography.bodySmall, // Small body style
-                modifier = Modifier.width(60.dp) // Fixed width
+                text = "${totalScore.format(2)}/$maxTotalScore",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.width(60.dp)
             )
         }
 
-        // Add vertical spacing of 24dp
         Spacer(modifier = Modifier.height(24.dp))
 
         // Share button, launches a share Intent
@@ -243,7 +230,7 @@ fun InsightsScreen(navController: NavController) {
             val shareIntent = Intent().apply {
                 action = Intent.ACTION_SEND
                 putExtra(Intent.EXTRA_TEXT, shareMessage) // Set share text
-                type = "text/plain" // Text type
+                type = "text/plain"
             }
             // Launch the share chooser
             context.startActivity(Intent.createChooser(shareIntent, "Share your Food Quality Score"))
@@ -251,7 +238,6 @@ fun InsightsScreen(navController: NavController) {
             Text("Share")
         }
 
-        // Add vertical spacing of 8dp
         Spacer(modifier = Modifier.height(8.dp))
 
         // Improve diet button, navigates to the NutriCoach page

@@ -28,16 +28,13 @@ data class Persona(val name: String, val description: String)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
-    // Get the current context for accessing SharedPreferences and resources
     val context = LocalContext.current
-    // Use SharedPreferences to store user data
     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
     // Get the user ID, defaulting to "Unknown"
     val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
 
     // Define the list of selectable food categories
     val foodCategories = listOf("Fruits", "Vegetables", "Grains", "Red Meat", "Seafood", "Poultry", "Fish", "Nuts/Seeds", "Eggs")
-    // Use remember to create a mutable state list to store selected food categories
     val selectedCategories = remember { mutableStateListOf<String>() }
 
     // Define the list of Persona options
@@ -52,9 +49,7 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
 
     // Use remember to save the selected Persona state
     var selectedPersona by remember { mutableStateOf<String?>(null) }
-    // Use remember to save the modal dialog display state
     var showModal by remember { mutableStateOf(false) }
-    // Use remember to save the currently viewed Persona
     var currentPersona by remember { mutableStateOf<Persona?>(null) }
 
     // Define the list of time-related questions
@@ -67,7 +62,6 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
     val selectedTimes = remember { mutableStateListOf("", "", "") }
     // Create time picker states for each time question, with an initial value of 12:00
     val timePickerStates = List(3) { rememberTimePickerState(initialHour = 12, initialMinute = 0) }
-    // Use remember to save the time picker display state, -1 means not displayed
     var showTimePicker by remember { mutableStateOf(-1) }
 
     // Print debug information to show whether it is in edit mode
@@ -77,9 +71,7 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
     if (isEdit) {
         LaunchedEffect(Unit) {
             selectedCategories.clear()
-            // Load existing food categories from SharedPreferences
             selectedCategories.addAll(prefs.getString("${userId}_categories", "")?.split(",")?.filter { it.isNotEmpty() } ?: emptyList())
-            // Load the selected Persona
             selectedPersona = prefs.getString("${userId}_persona", null)
             // Load existing time data
             selectedTimes[0] = prefs.getString("${userId}_biggest_meal_time", "") ?: ""
@@ -99,52 +91,50 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
     // Use Scaffold to manage the page layout, including the top bar
     Scaffold(
         topBar = {
-            // Top bar displaying the title and back button
             TopAppBar(
-                title = { Text("Food Intake Questionnaire") }, // Title
+                title = { Text("Food Intake Questionnaire") },
                 navigationIcon = {
-                    // Back button, navigates to the home page when clicked
                     IconButton(onClick = { navController.navigate("home") }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Back" // Accessibility description
+                            contentDescription = "Back"
                         )
                     }
                 },
-                windowInsets = WindowInsets(0, 0, 0, 0) // No additional margins
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0) // No additional margins for content area
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         // Main content area, using a Column for vertical arrangement
         Column(
             modifier = Modifier
-                .fillMaxSize() // Fill the entire screen
-                .padding(innerPadding) // Adapt to the inner padding of Scaffold
-                .padding(horizontal = 16.dp) // Horizontal padding of 16dp
-                .verticalScroll(rememberScrollState()), // Enable vertical scrolling
-            horizontalAlignment = Alignment.CenterHorizontally // Center content horizontally
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Food category title
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start // Align to the left
+                horizontalArrangement = Arrangement.Start
             ) {
                 Text(
                     text = "Tick all the food categories you can eat",
-                    style = MaterialTheme.typography.bodyLarge, // Large body style
-                    fontWeight = FontWeight.Bold, // Bold
-                    modifier = Modifier.align(Alignment.CenterVertically) // Vertically center
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterVertically)
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp)) // Add 8dp spacing
+            Spacer(modifier = Modifier.height(8.dp))
 
             // 3x3 layout for food category selectors
             Column(modifier = Modifier.fillMaxWidth()) {
-                for (i in 0 until 3) { // 3 rows
+                for (i in 0 until 3) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween // Distribute evenly
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         // Each row has 3 options
                         for (j in 0 until 3) {
@@ -153,8 +143,8 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                                 val category = foodCategories[index]
                                 Column(
                                     modifier = Modifier
-                                        .weight(1f) // Distribute width evenly
-                                        .padding(4.dp) // Padding of 4dp on all sides
+                                        .weight(1f)
+                                        .padding(4.dp)
                                         .selectable(
                                             selected = selectedCategories.contains(category),
                                             onClick = {
@@ -167,16 +157,16 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                                             }
                                         )
                                         .padding(4.dp), // Additional padding
-                                    horizontalAlignment = Alignment.CenterHorizontally // Center horizontally
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Checkbox(
                                         checked = selectedCategories.contains(category),
-                                        onCheckedChange = null // Handled by selectable
+                                        onCheckedChange = null
                                     )
                                     Text(
                                         text = category,
-                                        style = MaterialTheme.typography.bodyMedium, // Medium body style
-                                        textAlign = TextAlign.Center // Center text
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        textAlign = TextAlign.Center
                                     )
                                 }
                             }
@@ -185,40 +175,40 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp)) // Add 16dp spacing
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Persona category title
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start // Align to the left
+                horizontalArrangement = Arrangement.Start
             ) {
                 Text(
                     text = "Your Persona",
-                    style = MaterialTheme.typography.bodyLarge, // Large body style
-                    fontWeight = FontWeight.Bold, // Bold
-                    modifier = Modifier.align(Alignment.CenterVertically) // Vertically center
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterVertically)
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp)) // Add 8dp spacing
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Persona description text
             Text(
                 text = "People can be broadly classified into 6 different types based on their eating preferences. " +
                         "Click on each button below to find out the different types, and select the type that best fits you!",
-                style = MaterialTheme.typography.bodyMedium, // Medium body style
-                modifier = Modifier.padding(bottom = 8.dp) // Custom padding
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
             )
-            Spacer(modifier = Modifier.height(8.dp)) // Add 8dp spacing
+            Spacer(modifier = Modifier.height(8.dp))
 
             // 3x2 layout for Persona buttons
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp) // 8dp spacing between rows
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 for (i in 0 until 3) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp) // 8dp spacing between columns
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         val persona1 = personas[i * 2]
                         val persona2 = personas[i * 2 + 1]
@@ -226,10 +216,10 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                             persona = persona1,
                             isSelected = selectedPersona == persona1.name,
                             onClick = {
-                                currentPersona = persona1 // Set the currently viewed Persona
-                                showModal = true // Show the modal dialog
+                                currentPersona = persona1
+                                showModal = true
                             },
-                            modifier = Modifier.weight(1f) // Distribute width evenly
+                            modifier = Modifier.weight(1f)
                         )
                         PersonaButton(
                             persona = persona2,
@@ -243,51 +233,51 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp)) // Add 16dp spacing
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Timing questions title
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start // Align to the left
+                horizontalArrangement = Arrangement.Start
             ) {
                 Text(
                     text = "Timing",
-                    style = MaterialTheme.typography.bodyLarge, // Large body style
-                    fontWeight = FontWeight.Bold, // Bold
-                    modifier = Modifier.align(Alignment.CenterVertically) // Vertically center
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.CenterVertically)
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp)) // Add 8dp spacing
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Display timing questions and selection buttons
             timeQuestions.forEachIndexed { index, question ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp), // Vertical padding of 4dp
-                    verticalAlignment = Alignment.CenterVertically // Vertically center
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = question,
-                        style = MaterialTheme.typography.bodyMedium, // Medium body style
+                        style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier
-                            .weight(1f) // Occupy remaining space
-                            .padding(end = 8.dp) // Right padding of 8dp
+                            .weight(1f)
+                            .padding(end = 8.dp)
                     )
                     Button(
-                        onClick = { showTimePicker = index }, // Show the corresponding time picker
+                        onClick = { showTimePicker = index },
                         modifier = Modifier
-                            .width(100.dp) // Fixed width of 100dp
+                            .width(100.dp)
                     ) {
                         Text(
-                            text = selectedTimes[index].ifEmpty { "Select" }, // Display selected time or prompt
-                            textAlign = TextAlign.Center // Center text
+                            text = selectedTimes[index].ifEmpty { "Select" },
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp)) // Add 16dp spacing
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Submit button
             Button(onClick = {
@@ -320,19 +310,18 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
     // Display the time picker dialog
     if (showTimePicker >= 0) {
         AlertDialog(
-            onDismissRequest = { showTimePicker = -1 }, // Close when clicking outside
-            title = { Text(timeQuestions[showTimePicker]) }, // Display the corresponding question
+            onDismissRequest = { showTimePicker = -1 },
+            title = { Text(timeQuestions[showTimePicker]) },
             text = {
                 // Time picker component
                 TimePicker(state = timePickerStates[showTimePicker])
             },
             confirmButton = {
                 TextButton(onClick = {
-                    // Format the selected time as HH:MM
                     val hour = timePickerStates[showTimePicker].hour.toString().padStart(2, '0')
                     val minute = timePickerStates[showTimePicker].minute.toString().padStart(2, '0')
                     selectedTimes[showTimePicker] = "$hour:$minute"
-                    showTimePicker = -1 // Close the dialog
+                    showTimePicker = -1
                 }) {
                     Text("Confirm")
                 }
@@ -348,8 +337,8 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
     // Display the Persona details modal dialog
     if (showModal && currentPersona != null) {
         AlertDialog(
-            onDismissRequest = { showModal = false }, // Close when clicking outside
-            title = { Text(currentPersona!!.name) }, // Display the Persona name
+            onDismissRequest = { showModal = false },
+            title = { Text(currentPersona!!.name) },
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     // Dynamically load the image based on the Persona name
@@ -360,21 +349,21 @@ fun QuestionnaireScreen(navController: NavController, isEdit: Boolean = false) {
 
                     Image(
                         painter = painterResource(id = resourceId),
-                        contentDescription = currentPersona!!.name, // Accessibility description
+                        contentDescription = currentPersona!!.name,
                         modifier = Modifier
-                            .size(100.dp) // Image size of 100dp
-                            .border(1.dp, MaterialTheme.colorScheme.onSurface) // Add border
+                            .size(100.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onSurface)
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp)) // Add 8dp spacing
-                    Text(currentPersona!!.description, textAlign = TextAlign.Center) // Display Persona description
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(currentPersona!!.description, textAlign = TextAlign.Center)
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        selectedPersona = currentPersona!!.name // Select the Persona
-                        showModal = false // Close the dialog
+                        selectedPersona = currentPersona!!.name
+                        showModal = false
                     }
                 ) {
                     Text("Select")
@@ -407,11 +396,11 @@ fun PersonaButton(
         if (isSelected) {
             Box(
                 modifier = Modifier
-                    .matchParentSize() // Match the button size
-                    .padding(1.dp) // Extend the border outward
+                    .matchParentSize()
+                    .padding(1.dp)
                     .border(
                         width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary, // Primary color border
+                        color = MaterialTheme.colorScheme.primary,
                         shape = buttonShape
                     )
             )
@@ -422,10 +411,10 @@ fun PersonaButton(
             onClick = onClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(1.dp), // Shrink to show the border
-            shape = buttonShape // Rounded shape
+                .padding(1.dp),
+            shape = buttonShape
         ) {
-            Text(persona.name) // Display the Persona name
+            Text(persona.name)
         }
     }
 }

@@ -21,23 +21,15 @@ data class User(val userId: String, val phoneNumber: String)
 // Function to load the user list from the users.csv file in assets
 @Composable
 fun loadUsersFromCsv(): List<User> {
-    // Get the current context for accessing assets
     val context = LocalContext.current
-    // Create a mutable list to store user data
     val users = mutableListOf<User>()
     try {
-        // Open the users.csv file in the assets directory
         context.assets.open("users.csv").use { inputStream ->
-            // Use BufferedReader to read the CSV file content
             BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                // Skip the header row and read data line by line
                 reader.readLines().drop(1).forEach { line ->
-                    // Split each line into columns by commas
                     val columns = line.split(",")
-                    // The first column is the phone number, the second column is the user ID
                     val phoneNumber = columns[0]
                     val userId = columns[1]
-                    // Create a User object and add it to the list
                     users.add(User(userId, phoneNumber))
                 }
             }
@@ -54,13 +46,9 @@ fun loadUsersFromCsv(): List<User> {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavController) {
-    // Get the current context for accessing SharedPreferences
     val context = LocalContext.current
-    // Use SharedPreferences to store user data and login status
     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
-    // Load the user data list
     val users = loadUsersFromCsv()
-    // Extract all user IDs for the dropdown menu
     val userIds = users.map { it.userId }
     // Use remember to save the selected user ID state, with an initial value as a prompt text
     var selectedId by remember { mutableStateOf("Select User ID") }
@@ -72,15 +60,13 @@ fun LoginScreen(navController: NavController) {
     // Use Scaffold to manage the page layout, including the top bar
     Scaffold(
         topBar = {
-            // Top bar displaying the title and back button
             TopAppBar(
-                title = { Text("Login") }, // Title is "Login"
+                title = { Text("Login") },
                 navigationIcon = {
-                    // Back button, navigates to the previous page when clicked
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = androidx.compose.material.icons.Icons.Default.ArrowBack,
-                            contentDescription = "Back" // Accessibility description
+                            contentDescription = "Back"
                         )
                     }
                 }
@@ -90,75 +76,68 @@ fun LoginScreen(navController: NavController) {
         // Main content area, using a Column for vertical arrangement
         Column(
             modifier = Modifier
-                .fillMaxSize() // Fill the entire screen
-                .padding(innerPadding) // Adapt to the inner padding of Scaffold
-                .padding(16.dp), // Additional padding of 16dp on all sides
-            horizontalAlignment = Alignment.CenterHorizontally, // Center content horizontally
-            verticalArrangement = Arrangement.Center // Center content vertically
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            // Add vertical spacing of 16dp
             Spacer(modifier = Modifier.height(16.dp))
 
             // Use remember to save the dropdown menu's expanded state
             var expanded by remember { mutableStateOf(false) }
-            // Dropdown menu component for selecting a user ID
             ExposedDropdownMenuBox(
                 expanded = expanded,
-                onExpandedChange = { expanded = !expanded } // Toggle expanded state on click
+                onExpandedChange = { expanded = !expanded }
             ) {
-                // Display the currently selected user ID, read-only
                 OutlinedTextField(
                     value = selectedId,
-                    onValueChange = { }, // Read-only, no input handling needed
-                    label = { Text("User ID") }, // Field label
-                    readOnly = true, // Set to read-only
-                    modifier = Modifier.menuAnchor() // Anchor for the dropdown menu
+                    onValueChange = { },
+                    label = { Text("User ID") },
+                    readOnly = true,
+                    modifier = Modifier.menuAnchor()
                 )
                 // Dropdown menu content
                 ExposedDropdownMenu(
                     expanded = expanded,
-                    onDismissRequest = { expanded = false }, // Close menu when clicking outside
+                    onDismissRequest = { expanded = false },
                     modifier = Modifier
-                        .heightIn(max = 200.dp) // Maximum height of 200dp
-                        .verticalScroll(rememberScrollState()) // Enable vertical scrolling
+                        .heightIn(max = 200.dp)
+                        .verticalScroll(rememberScrollState())
                 ) {
                     // Create menu items for each user ID
                     userIds.forEach { id ->
                         DropdownMenuItem(
-                            text = { Text(id) }, // Display the user ID
+                            text = { Text(id) },
                             onClick = {
-                                selectedId = id // Update state when selected
-                                expanded = false // Close the menu
+                                selectedId = id
+                                expanded = false
                             }
                         )
                     }
                 }
             }
 
-            // Add vertical spacing of 16dp
             Spacer(modifier = Modifier.height(16.dp))
 
             // Text field for entering the phone number
             OutlinedTextField(
                 value = phoneNumber,
-                onValueChange = { phoneNumber = it }, // Update the input value
-                label = { Text("Phone Number") } // Field label
+                onValueChange = { phoneNumber = it },
+                label = { Text("Phone Number") }
             )
 
-            // Add vertical spacing of 16dp
             Spacer(modifier = Modifier.height(16.dp))
 
             // If there is an error message, display it in red text
             if (errorMessage.isNotEmpty()) {
                 Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
-                Spacer(modifier = Modifier.height(8.dp)) // Add spacing of 8dp
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             // Continue button to validate user input and navigate
             Button(onClick = {
-                // Find the user matching the selected ID
                 val selectedUser = users.find { it.userId == selectedId }
-                // Validate if the user ID and phone number match
                 if (selectedUser != null && selectedUser.phoneNumber == phoneNumber) {
                     with(prefs.edit()) {
                         // Save the user ID and login status
