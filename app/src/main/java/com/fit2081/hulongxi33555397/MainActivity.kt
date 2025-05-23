@@ -21,83 +21,63 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
-// Main activity class responsible for setting up the app's UI and navigation structure
+// MainActivity is responsible for setting up the application UI and navigation structure
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // Create a navigation controller to manage page transitions
             val navController = rememberNavController()
-            // Get the current context for accessing SharedPreferences
             val context = LocalContext.current
-            // Use SharedPreferences to store user data and login status
             val prefs = context.getSharedPreferences("NutriTrackPrefs", MODE_PRIVATE)
-            // Check if the user is logged in, default is false
             val isLoggedIn = prefs.getBoolean("is_logged_in", false)
 
-            // Dynamically determine the app's start page
+            // Dynamically determine the startup page
             val startDestination = if (isLoggedIn) {
-                // Get the user ID, default is "Unknown"
                 val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
-                // Check if the user has filled out the questionnaire data (check the user-specific categories key)
                 if (prefs.getString("${userId}_categories", null) != null) {
-                    "home" // If questionnaire data exists, start at HomeScreen
+                    "home"
                 } else {
-                    "questionnaire" // If no questionnaire data, go to QuestionnaireScreen
+                    "questionnaire"
                 }
             } else {
-                "welcome" // If not logged in, go to WelcomeScreen
+                "welcome"
             }
 
-            // Use MaterialTheme to provide consistent theme styling
             MaterialTheme {
-                // Surface fills the entire screen and provides a background
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // Get the current navigation route to dynamically display the navigation bar
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = navBackStackEntry?.destination?.route ?: ""
 
-                    // Determine whether to show the bottom navigation bar
-                    // Only show on pages other than welcome, login, and questionnaire
+                    // Show bottom navigation bar only on certain pages
                     val shouldShowBottomBar = !currentRoute.startsWith("welcome") &&
                             !currentRoute.startsWith("login") &&
                             !currentRoute.startsWith("questionnaire")
 
-                    // Use Scaffold to manage the app's layout structure, including the bottom navigation bar
                     Scaffold(
                         bottomBar = {
                             if (shouldShowBottomBar) {
-                                BottomNavigationBar(navController) // Show the navigation bar
+                                BottomNavigationBar(navController)
                             }
-                            // If not logged in or on specific pages, bottomBar is empty and the navigation bar is not displayed
                         }
                     ) { paddingValues ->
-                        // NavHost defines the navigation graph and manages all page routes
                         NavHost(
                             navController = navController,
                             startDestination = startDestination,
-                            modifier = Modifier.padding(paddingValues) // Apply Scaffold's padding to avoid content being obscured by the navigation bar
+                            modifier = Modifier.padding(paddingValues)
                         ) {
-                            // Define the welcome page route
                             composable("welcome") { WelcomeScreen(navController) }
-                            // Define the login page route
                             composable("login") { LoginScreen(navController) }
-                            // Define the home page route
                             composable("home") { HomeScreen(navController) }
-                            // Define the questionnaire page route, supporting the edit mode parameter
                             composable("questionnaire?isEdit={isEdit}") { backStackEntry ->
                                 QuestionnaireScreen(
                                     navController,
                                     isEdit = backStackEntry.arguments?.getString("isEdit")?.toBoolean() ?: false
                                 )
                             }
-                            // Define the insights page route
                             composable("insights") { InsightsScreen(navController) }
-                            // Define the NutriCoach page route
                             composable("nutricoach") { NutriCoachScreen(navController) }
-                            // Define the settings page route
                             composable("setting") { SettingScreen(navController) }
                         }
                     }
@@ -110,7 +90,6 @@ class MainActivity : ComponentActivity() {
 // Define the bottom navigation bar as a Composable function
 @Composable
 fun BottomNavigationBar(navController: NavController) {
-    // Get the current navigation route to highlight the selected item
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -118,35 +97,35 @@ fun BottomNavigationBar(navController: NavController) {
     NavigationBar {
         // Home navigation item
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Home, contentDescription = "Home") }, // Home icon
-            label = { Text("Home") }, // Label text
-            selected = currentRoute == "home", // Highlight when the current route is "home"
+            icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+            label = { Text("Home") },
+            selected = currentRoute == "home",
             onClick = {
                 navController.navigate("home") {
-                    popUpTo("home") { inclusive = true } // Navigate to Home and clear the stack up to Home
+                    popUpTo("home") { inclusive = true }
                 }
             }
         )
         // Insights navigation item
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Insights, contentDescription = "Insights") }, // Insights icon
+            icon = { Icon(Icons.Default.Insights, contentDescription = "Insights") },
             label = { Text("Insights") },
             selected = currentRoute == "insights",
-            onClick = { navController.navigate("insights") } // Navigate to Insights
+            onClick = { navController.navigate("insights") }
         )
         // NutriCoach navigation item
         NavigationBarItem(
-            icon = { Icon(Icons.Default.FitnessCenter, contentDescription = "NutriCoach") }, // NutriCoach icon
+            icon = { Icon(Icons.Default.FitnessCenter, contentDescription = "NutriCoach") },
             label = { Text("NutriCoach") },
             selected = currentRoute == "nutricoach",
-            onClick = { navController.navigate("nutricoach") } // Navigate to NutriCoach
+            onClick = { navController.navigate("nutricoach") }
         )
         // Setting navigation item
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Settings, contentDescription = "Setting") }, // Settings icon
+            icon = { Icon(Icons.Default.Settings, contentDescription = "Setting") },
             label = { Text("Setting") },
             selected = currentRoute == "setting",
-            onClick = { navController.navigate("setting") } // Navigate to Setting
+            onClick = { navController.navigate("setting") }
         )
     }
 }
