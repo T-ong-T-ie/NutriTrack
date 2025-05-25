@@ -14,6 +14,9 @@ import androidx.navigation.NavController
 import android.content.Context
 import android.content.Intent
 import androidx.compose.ui.graphics.Color
+import com.fit2081.hulongxi33555397.db.NutritrackRepository
+import com.fit2081.hulongxi33555397.utils.format
+import kotlinx.coroutines.launch
 
 // Define the structure for food category scores, including name, score, and maximum score
 data class CategoryScore(
@@ -28,16 +31,34 @@ fun InsightsScreen(navController: NavController) {
     // Get the current context for accessing SharedPreferences and launching Intents
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
+    val repository = remember { NutritrackRepository(context) }
+    val coroutineScope = rememberCoroutineScope()
 
     val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
-    val userData = loadUserDataFromCsv(context, userId)
-    val isMale = userData?.sex == "Male"
+
+    // 从数据库获取用户数据
+    var patientData by remember { mutableStateOf<com.fit2081.hulongxi33555397.db.Patient?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    // 加载用户数据
+    LaunchedEffect(userId) {
+        coroutineScope.launch {
+            try {
+                patientData = repository.getPatientById(userId)
+                isLoading = false
+            } catch (e: Exception) {
+                e.printStackTrace()
+                isLoading = false
+            }
+        }
+    }
 
     // Create a mutable list to store category scores
     val categoryScores = mutableListOf<CategoryScore>()
+    val isMale = patientData?.sex == "Male"
 
     // If user data exists, populate the categoryScores list
-    userData?.let { data ->
+    patientData?.let { data ->
         categoryScores.add(CategoryScore(
             name = "Discretionary",
             score = if (isMale) data.DiscretionaryHEIFAscoreMale else data.DiscretionaryHEIFAscoreFemale,
@@ -129,123 +150,128 @@ fun InsightsScreen(navController: NavController) {
         ))
     }
 
-    // Get the user's total score, extracted from CSV data based on gender
-    val totalScore = if (isMale) userData?.heifaTotalScoreMale ?: 0f else userData?.heifaTotalScoreFemale ?: 0f
+    // Get the user's total score, extracted from database data based on gender
+    val totalScore = if (isMale) patientData?.heifaTotalScoreMale ?: 0f else patientData?.heifaTotalScoreFemale ?: 0f
     // The maximum total score is fixed at 100
     val maxTotalScore = 100f
 
-    // Main content area, using a Column for vertical arrangement
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        // Page title
-        Text(
-            text = "Insights: Food Score",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold // Bold
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        categoryScores.forEach { category ->
-            val scorePercentage = (category.score / category.maxScore)
-            val scoreColor = when {
-                scorePercentage >= 0.8f -> Color(0xFF006400) // Dark green for high scores
-                scorePercentage >= 0.6f -> Color(0xFF90EE90) // Light green for medium-high scores
-                scorePercentage >= 0.4f -> Color(0xFFFFD700) // Yellow for medium scores
-                else -> Color(0xFFFF6347) // Red for low scores
-            }
-
-            Row(
+    // Main content area
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        } else {
+            // Main content area, using a Column for vertical arrangement
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
             ) {
+                // Page title
                 Text(
-                    text = category.name,
-                    style = MaterialTheme.typography.bodyMedium, // Medium body style
-                    modifier = Modifier.width(150.dp)
+                    text = "Insights: Food Score",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold // Bold
                 )
-                LinearProgressIndicator(
-                    progress = (category.score / category.maxScore).coerceIn(0f, 1f),
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                categoryScores.forEach { category ->
+                    val scorePercentage = (category.score / category.maxScore)
+                    val scoreColor = when {
+                        scorePercentage >= 0.8f -> Color(0xFF006400) // Dark green for high scores
+                        scorePercentage >= 0.6f -> Color(0xFF90EE90) // Light green for medium-high scores
+                        scorePercentage >= 0.4f -> Color(0xFFFFD700) // Yellow for medium scores
+                        else -> Color(0xFFFF6347) // Red for low scores
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = category.name,
+                            style = MaterialTheme.typography.bodyMedium, // Medium body style
+                            modifier = Modifier.width(150.dp)
+                        )
+                        LinearProgressIndicator(
+                            progress = (category.score / category.maxScore).coerceIn(0f, 1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(8.dp),
+                            color = scoreColor
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${category.score.format(2)}/${category.maxScore.toInt()}",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.width(60.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(40.dp))
+
+                // Total score title, left-aligned
+                Text(
+                    text = "Total Food Quality Score",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Total score progress bar and value
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(8.dp),
-                    color = scoreColor
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "${category.score.format(2)}/${category.maxScore.toInt()}",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.width(60.dp)
-                )
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    LinearProgressIndicator(
+                        progress = (totalScore / maxTotalScore).coerceIn(0f, 1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(12.dp),
+                        color = Color(0xFF006400)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "${totalScore.format(2)}/$maxTotalScore",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.width(60.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Share button, launches a share Intent
+                Button(onClick = {
+                    val shareMessage = "Hi, I just got a Food Quality Score of ${totalScore.format(2)}/$maxTotalScore!"
+                    val shareIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, shareMessage) // Set share text
+                        type = "text/plain"
+                    }
+                    // Launch the share chooser
+                    context.startActivity(Intent.createChooser(shareIntent, "Share your Food Quality Score"))
+                }) {
+                    Text("Share")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Improve diet button, navigates to the NutriCoach page
+                Button(onClick = { navController.navigate("nutricoach") }) {
+                    Text("Improve My Diet!")
+                }
             }
-        }
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // Total score title, left-aligned
-        Text(
-            text = "Total Food Quality Score",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.Start)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Total score progress bar and value
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            LinearProgressIndicator(
-                progress = (totalScore / maxTotalScore).coerceIn(0f, 1f),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(12.dp),
-                color = Color(0xFF006400)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "${totalScore.format(2)}/$maxTotalScore",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.width(60.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Share button, launches a share Intent
-        Button(onClick = {
-            val shareMessage = "Hi, I just got a Food Quality Score of ${totalScore.format(2)}/$maxTotalScore!"
-            val shareIntent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, shareMessage) // Set share text
-                type = "text/plain"
-            }
-            // Launch the share chooser
-            context.startActivity(Intent.createChooser(shareIntent, "Share your Food Quality Score"))
-        }) {
-            Text("Share")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Improve diet button, navigates to the NutriCoach page
-        Button(onClick = { navController.navigate("nutricoach") }) {
-            Text("Improve My Diet!")
         }
     }
 }
 
-// Extension function: Format a float to a string with the specified number of decimal places
-fun Float.format(digits: Int) = "%.${digits}f".format(this)

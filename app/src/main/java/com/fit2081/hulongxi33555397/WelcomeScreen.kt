@@ -13,9 +13,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun WelcomeScreen(navController: NavController) {
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
+    val isLoggedIn = prefs.getBoolean("is_logged_in", false)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -71,7 +77,7 @@ fun WelcomeScreen(navController: NavController) {
             onClick = { navController.navigate("login") },
             modifier = Modifier.fillMaxWidth(0.8f)
         ) {
-            Text("Login")
+            Text(if (isLoggedIn) "切换账号登录" else "登录")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -85,3 +91,4 @@ fun WelcomeScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
+
