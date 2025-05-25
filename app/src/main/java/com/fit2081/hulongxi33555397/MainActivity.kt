@@ -35,11 +35,30 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fit2081.hulongxi33555397.ui.theme.NutriTrackTheme
 import android.content.Context
+import android.util.Log
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
+import com.fit2081.hulongxi33555397.db.NutritrackRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 创建仓库并初始化数据库
+        val repository = NutritrackRepository(this)
+
+        // 在协程中导入数据
+        lifecycleScope.launch(Dispatchers.IO) {
+            val count = repository.patientCount()
+            if (count == 0) {
+                val importedCount = repository.importPatientsFromCsv()
+                Log.d("MainActivity", "已从CSV导入 $importedCount 条患者数据")
+            } else {
+                Log.d("MainActivity", "数据库中已有 $count 条患者数据")
+            }
+        }
         setContent {
             NutriTrackTheme {
                 Surface(

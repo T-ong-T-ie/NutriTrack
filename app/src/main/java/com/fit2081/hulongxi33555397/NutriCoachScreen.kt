@@ -16,11 +16,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Path
 import android.content.Context
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.ui.draw.clip
@@ -34,11 +31,10 @@ import java.util.Locale
 import com.fit2081.hulongxi33555397.db.NutriCoachTip
 import com.fit2081.hulongxi33555397.db.NutritrackRepository
 import com.fit2081.hulongxi33555397.db.Patient
-// 修正 BuildConfig 的导入
 import com.fit2081.hulongxi33555397.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
 
-// Data classes for FruityVice API response (保持不变)
+// Data classes for FruityVice API response
 data class FruitNutrition(
     val carbohydrates: Double?,
     val protein: Double?,
@@ -104,34 +100,8 @@ fun NutriCoachScreen(navController: NavHostController) {
     val generativeModel = remember {
         GenerativeModel(
             modelName = "gemini-pro",
-            apiKey = BuildConfig.GEMINI_API_KEY // 使用正确的 BuildConfig
+            apiKey = BuildConfig.GEMINI_API_KEY
         )
-    }
-
-    // 前向声明函数，以便在 LaunchedEffect 中使用
-    lateinit var generateAIResponse: () -> Unit
-    lateinit var loadSavedTips: () -> Unit
-
-    LaunchedEffect(userId) {
-        coroutineScope.launch {
-            try {
-                patientData = repository.getPatientById(userId)
-                if (patientData != null) {
-                    // 假设 Patient 类使用单一 fruitScore 字段
-                    fruitScore = patientData?.fruitScore ?: 0f
-                    isOptimalFruitScore = fruitScore >= 5f // 假设理想分数为5分或更高
-                }
-                if (::loadSavedTips.isInitialized) { // 确保函数已初始化
-                    loadSavedTips()
-                }
-                if (::generateAIResponse.isInitialized) { // 确保函数已初始化
-                    generateAIResponse() // 初始加载时生成AI建议
-                }
-            } catch (e: Exception) {
-                fruitError = "加载初始数据失败: ${e.message}"
-                e.printStackTrace()
-            }
-        }
     }
 
     // 水果搜索功能
@@ -146,30 +116,32 @@ fun NutriCoachScreen(navController: NavHostController) {
             fruitError = null
             try {
                 val response = ApiClient.fruityViceApi.getFruitByName(fruitNameQuery)
-                if (response.isSuccessful) {
+                if (response.isSuccessful && response.body() != null) {
                     fruitDetails = response.body()
-                    if (fruitDetails == null) {
-                        fruitError = "未找到水果信息"
-                    } else {
-                        // 成功获取水果信息后，生成AI建议
-                        if (::generateAIResponse.isInitialized) {
-                            generateAIResponse()
-                        }
-                    }
                 } else {
-                    fruitError = "搜索水果失败: ${response.message()}"
+                    fruitError = "未找到该水果信息"
                 }
             } catch (e: Exception) {
-                fruitError = "搜索水果时发生错误: ${e.message}"
-                e.printStackTrace()
+                fruitError = "查询出错: ${e.message}"
             } finally {
                 isLoadingFruit = false
             }
         }
     }
 
-    // 将函数定义移到 LaunchedEffect 之后，并进行初始化赋值
-    generateAIResponse = {
+    // 加载历史提示函数
+    fun loadSavedTips() {
+        coroutineScope.launch {
+            try {
+                savedTips = repository.getUserTips(userId)
+            } catch (e: Exception) {
+                // 处理错误
+            }
+        }
+    }
+
+    // 生成AI回复函数
+    fun generateAIResponse() {
         isLoadingGenAI = true
         genAIResponse = ""
         val currentFruitDetails = fruitDetails // 捕获当前状态
@@ -189,38 +161,52 @@ fun NutriCoachScreen(navController: NavHostController) {
 
         coroutineScope.launch {
             try {
+                // 使用Gemini生成回复
                 val response = generativeModel.generateContent(prompt)
                 genAIResponse = response.text ?: "无法生成回复"
 
-                if (genAIResponse.isNotBlank()) {
+                // 保存到数据库
+                if (genAIResponse.isNotEmpty()) {
                     val tip = NutriCoachTip(
                         userId = userId,
                         content = genAIResponse,
-                        category = if (currentFruitDetails != null) "水果分析: ${currentFruitDetails.name}" else "健康建议",
+                        category = if (fruitDetails != null) "水果分析" else "健康建议",
                         timestamp = System.currentTimeMillis()
-                        // imageUrl 字段可以根据需要添加
                     )
-                    repository.saveTip(tip) // 确保 repository.saveTip 已实现
-                    if (::loadSavedTips.isInitialized) {
-                        loadSavedTips() // 保存后刷新历史记录
-                    }
+                    repository.saveTip(tip)
+                    // 刷新历史记录
+                    loadSavedTips()
                 }
             } catch (e: Exception) {
                 genAIResponse = "生成回复时发生错误: ${e.message}"
-                e.printStackTrace()
             } finally {
                 isLoadingGenAI = false
             }
         }
     }
 
-    loadSavedTips = {
+    // 加载用户数据和历史提示
+    LaunchedEffect(userId) {
         coroutineScope.launch {
             try {
-                savedTips = repository.getUserTips(userId) // 确保 repository.getUserTips 已实现
+                // 加载用户数据
+                patientData = repository.getPatientById(userId)
+
+                // 根据性别获取水果得分
+                if (patientData != null) {
+                    fruitScore = patientData?.fruitScore ?: 0f
+
+                    // 判断水果得分是否达到理想值（大于等于5分）
+                    isOptimalFruitScore = fruitScore >= 5f
+                }
+
+                // 加载历史提示
+                loadSavedTips()
+
+                // 自动生成初始AI建议
+                generateAIResponse()
             } catch (e: Exception) {
-                // 可以考虑在这里显示错误信息给用户
-                e.printStackTrace()
+                // 处理异常
             }
         }
     }
@@ -230,11 +216,11 @@ fun NutriCoachScreen(navController: NavHostController) {
             TopAppBar(
                 title = { Text("NutriCoach") },
                 actions = {
-                    IconButton(onClick = { if (::generateAIResponse.isInitialized) generateAIResponse() }) {
+                    IconButton(onClick = { generateAIResponse() }) {
                         Icon(Icons.Filled.Refresh, contentDescription = "刷新建议")
                     }
                     IconButton(onClick = {
-                        if (::loadSavedTips.isInitialized) loadSavedTips()
+                        loadSavedTips()
                         showTipsHistory = true
                     }) {
                         Icon(Icons.Filled.History, contentDescription = "历史记录")
