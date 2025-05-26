@@ -1,5 +1,6 @@
 package com.fit2081.hulongxi33555397
 
+import NutriCoachScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -53,13 +54,9 @@ class MainActivity : ComponentActivity() {
 
         // Importing data into a coroutine
         lifecycleScope.launch(Dispatchers.IO) {
+            repository.initializeDatabase()
             val count = repository.patientCount()
-            if (count == 0) {
-                val importedCount = repository.importPatientsFromCsv()
-                Log.d("MainActivity", "Imported $importedCount individual patient data from CSV")
-            } else {
-                Log.d("MainActivity", "There are already $count patient data in the database")
-            }
+            Log.d("MainActivity", "数据库中有 $count 条患者数据")
         }
         setContent {
             NutriTrackTheme {

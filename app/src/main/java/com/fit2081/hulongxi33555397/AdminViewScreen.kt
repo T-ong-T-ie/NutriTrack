@@ -8,149 +8,33 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.fit2081.hulongxi33555397.db.NutritrackRepository
-import kotlinx.coroutines.launch
-import com.google.ai.client.generativeai.GenerativeModel
-import kotlin.toString
+import com.fit2081.hulongxi33555397.viewmodel.AdminViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminViewScreen(navController: NavController) {
-    val context = LocalContext.current
-    val repository = remember { NutritrackRepository(context) }
-    val coroutineScope = rememberCoroutineScope()
+    // Using ViewModel
+    val viewModel: AdminViewModel = viewModel()
 
-    // State variables
-    var isLoading by remember { mutableStateOf(true) }
-    var isAnalyzing by remember { mutableStateOf(false) }
-    var maleAvgScore by remember { mutableStateOf(0f) }
-    var femaleAvgScore by remember { mutableStateOf(0f) }
-    var patterns by remember { mutableStateOf(listOf<String>()) }
-    var patientStats by remember { mutableStateOf<Map<String, Any>>(emptyMap()) }
-
-    // Initialize the Gemini model
-    val generativeModel = remember {
-        GenerativeModel(
-            modelName = "gemini-1.5-flash-latest",
-            apiKey = BuildConfig.GEMINI_API_KEY
-        )
-    }
-
-    // Analyzing Data with GenAI
-    fun analyzeDataWithGenAI() {
-        if (patientStats.isEmpty()) return
-
-        isAnalyzing = true
-        patterns = emptyList()
-
-        coroutineScope.launch {
-            try {
-                val prompt = buildString {
-                    append("As a nutrition data analyst, please find 3 interesting patterns or insights based on the following data:\n")
-                    append("- Average HEIFA score for male users:${String.format("%.2f", maleAvgScore)}\n")
-                    append("- Average HEIFA score for female users:${String.format("%.2f", femaleAvgScore)}\n")
-
-                    // Add more detailed statistics
-                    patientStats.forEach { (key, value) ->
-                        append("- $key: $value\n")
-                    }
-
-                    append("\nPlease provide 3 interesting findings based on data. Each finding should be a complete and concise sentence. Do not use Markdown format.")
-                    append("Do not include serial numbers or prefixes. I will automatically add serial numbers on the interface.")
-                    append("All replies must be in English.")
-                }
-
-                val response = generativeModel.generateContent(prompt)
-                val analysisText = response.text ?: "Unable to generate analysis results"
-
-                // Process the response text, splitting it into individual findings
-                patterns = analysisText
-                    .split("\n")
-                    .filter { it.isNotBlank() }
-                    .map { it.trim().removePrefix("-").trim() }
-                    .take(3)
-
-                if (patterns.isEmpty()) {
-                    patterns = listOf("No obvious patterns can be discerned from the data")
-                }
-            } catch (e: Exception) {
-                patterns = listOf(
-                    "An error occurred while generating data analysis",
-                    "Please check your network connection or try again",
-                    "If the problem persists, please contact technical support"
-                )
-            } finally {
-                isAnalyzing = false
-            }
-        }
-    }
+    // Observing ViewModel Status
+    val isLoading by viewModel.isLoading.observeAsState(true)
+    val isAnalyzing by viewModel.isAnalyzing.observeAsState(false)
+    val maleAvgScore by viewModel.maleAvgScore.observeAsState(0f)
+    val femaleAvgScore by viewModel.femaleAvgScore.observeAsState(0f)
+    val patterns by viewModel.patterns.observeAsState(listOf())
+    val patientStats by viewModel.patientStats.observeAsState(emptyMap())
 
     // Loading data
     LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            try {
-                // Get all patient data
-                val patients = repository.getAllPatients()
-                val stats = mutableMapOf<String, Any>()
-
-                // Calculating the average HEIFA score for men
-                val malePatients = patients.filter { it.sex.equals("Male", ignoreCase = true) }
-                maleAvgScore = if (malePatients.isNotEmpty()) {
-                    malePatients.sumOf { it.heifaTotalScoreMale.toDouble() }.toFloat() / malePatients.size
-                } else {
-                    0f
-                }
-                stats["Number of male users"] = malePatients.size
-
-                // Calculating the average HEIFA score for women
-                val femalePatients = patients.filter { it.sex.equals("Female", ignoreCase = true) }
-                femaleAvgScore = if (femalePatients.isNotEmpty()) {
-                    femalePatients.sumOf { it.heifaTotalScoreFemale.toDouble() }.toFloat() / femalePatients.size
-                } else {
-                    0f
-                }
-                stats["Number of female users"] = femalePatients.size
-
-                // Calculate other useful statistics
-                if (malePatients.isNotEmpty()) {
-                    stats["Average vegetable score for Men:"] = malePatients.sumOf { it.VegetablesHEIFAscoreMale.toDouble() }.toFloat() / malePatients.size
-                    stats["Average fruit score for Men:"] = malePatients.sumOf { it.FruitHEIFAscoreMale.toDouble() }.toFloat() / malePatients.size
-                    stats["Average Whole Grain Score for Men:"] = malePatients.sumOf { it.WholegrainsHEIFAscoreMale.toDouble() }.toFloat() / malePatients.size
-                    stats["Average Sodium Score for Men:"] = malePatients.sumOf { it.SodiumHEIFAscoreMale.toDouble() }.toFloat() / malePatients.size
-                    stats["Average Sugar Score for Men:"] = malePatients.sumOf { it.SugarHEIFAscoreMale.toDouble() }.toFloat() / malePatients.size
-                }
-
-                if (femalePatients.isNotEmpty()) {
-                    stats["Average vegetable score for Women:"] = femalePatients.sumOf { it.VegetablesHEIFAscoreFemale.toDouble() }.toFloat() / femalePatients.size
-                    stats["Average fruit score for Women:"] = femalePatients.sumOf { it.FruitHEIFAscoreFemale.toDouble() }.toFloat() / femalePatients.size
-                    stats["Average Whole Grain Score for Women:"] = femalePatients.sumOf { it.WholegrainsHEIFAscoreFemale.toDouble() }.toFloat() / femalePatients.size
-                    stats["Average Sodium Score for Women:"] = femalePatients.sumOf { it.SodiumHEIFAscoreFemale.toDouble() }.toFloat() / femalePatients.size
-                    stats["Average Sugar Score for Women:"] = femalePatients.sumOf { it.SugarHEIFAscoreFemale.toDouble() }.toFloat() / femalePatients.size
-                }
-
-                patientStats = stats
-
-                // Initial analysis data
-                analyzeDataWithGenAI()
-
-                isLoading = false
-            } catch (e: Exception) {
-                e.printStackTrace()
-                isLoading = false
-                patterns = listOf(
-                    "An error occurred while loading data",
-                    "Please check your database connection",
-                    "If the problem persists, please contact technical support"
-                )
-            }
-        }
+        viewModel.loadData()
     }
 
     Scaffold(
@@ -299,7 +183,7 @@ fun AdminViewScreen(navController: NavController) {
                             )
 
                             IconButton(
-                                onClick = { analyzeDataWithGenAI() },
+                                onClick = { viewModel.analyzeDataWithGenAI() },
                                 enabled = !isAnalyzing
                             ) {
                                 Icon(Icons.Default.Refresh, contentDescription = "Reanalysis")

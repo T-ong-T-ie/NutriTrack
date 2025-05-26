@@ -1,6 +1,5 @@
 package com.fit2081.hulongxi33555397.db
 
-
 import androidx.room.Dao
 import androidx.room.Entity
 import androidx.room.Insert

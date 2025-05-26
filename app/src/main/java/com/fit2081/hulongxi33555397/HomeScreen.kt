@@ -17,50 +17,43 @@ import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
-import com.fit2081.hulongxi33555397.db.NutritrackRepository
-import com.fit2081.hulongxi33555397.utils.format
-import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.fit2081.hulongxi33555397.viewmodel.HomeViewModel
+import kotlin.math.roundToInt
 
-// HomeScreen is the main page of the app, displaying user information, diet score, and logout functionality
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
-    val repository = remember { NutritrackRepository(context) }
-    val coroutineScope = rememberCoroutineScope()
 
-    // Get the user ID, defaulting to "Unknown"
+    // Using ViewModel
+    val viewModel: HomeViewModel = viewModel()
+
+    // Get user ID, default is "Unknown"
     val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
     val selectedCategories = prefs.getString("${userId}_categories", "")?.split(",") ?: emptyList()
 
-    // 从数据库获取用户数据
-    var patientData by remember { mutableStateOf<com.fit2081.hulongxi33555397.db.Patient?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
+    // Observing State from ViewModel
+    val isLoading by viewModel.isLoading.observeAsState(true)
+    val patientData by viewModel.patientData.observeAsState()
 
-    // 加载用户数据
+    // Loading User Data
     LaunchedEffect(userId) {
-        coroutineScope.launch {
-            try {
-                patientData = repository.getPatientById(userId)
-                isLoading = false
-            } catch (e: Exception) {
-                e.printStackTrace()
-                isLoading = false
-            }
-        }
+        viewModel.loadPatientData(userId)
     }
 
-    // 从用户数据中提取分数信息
+    // Extract score information from user data
     val isMale = patientData?.sex == "Male"
     val totalScore = if (isMale) patientData?.heifaTotalScoreMale ?: 0f else patientData?.heifaTotalScoreFemale ?: 0f
     val maxTotalScore = 100f
 
-    // Use Scaffold to manage the page layout, leaving the top bar empty
+    // Use Scaffold to manage page layout, leaving the top bar empty
     Scaffold(
-        topBar = { } // Top bar is not used, left empty
+        topBar = { }
     ) { padding ->
-        // 主要内容区域
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -70,11 +63,8 @@ fun HomeScreen(navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp)
-                    .padding(
-                        top = 16.dp,
-                        bottom = padding.calculateBottomPadding()
-                    )
+                    .padding(padding)
+                    .padding(16.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.Start
             ) {
@@ -88,7 +78,7 @@ fun HomeScreen(navController: NavController) {
                     color = Color.Gray
                 )
 
-                // 显示用户名或用户ID
+                // Display username
                 Text(
                     text = patientData?.name ?: userId,
                     style = MaterialTheme.typography.headlineMedium,
@@ -142,8 +132,18 @@ fun HomeScreen(navController: NavController) {
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    // Button to view detailed scores, navigates to the Insights page when clicked
-                    TextButton(onClick = { navController.navigate("insights") }) {
+                    // Button to view detailed scores, navigate to the Insights page when clicked
+                    TextButton(
+                        onClick = {
+                            navController.navigate("insights") {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    ) {
                         Text("See all scores >")
                     }
                 }
@@ -161,7 +161,7 @@ fun HomeScreen(navController: NavController) {
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
-                        text = "${totalScore.format(2)}/100",
+                        text = "${totalScore.roundToInt()}/100",
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color(0xFF006400)
                     )
@@ -207,4 +207,3 @@ fun HomeScreen(navController: NavController) {
         }
     }
 }
-

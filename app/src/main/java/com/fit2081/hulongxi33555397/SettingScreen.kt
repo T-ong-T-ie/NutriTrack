@@ -15,8 +15,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import android.content.Context
-import com.fit2081.hulongxi33555397.db.NutritrackRepository
-import kotlinx.coroutines.launch
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fit2081.hulongxi33555397.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,39 +25,24 @@ fun SettingScreen(navController: NavController) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
     var showLogoutDialog by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-    val repository = remember { NutritrackRepository(context) }
-
-    // Get User ID
-    val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
-
-    // 从Get user information from database
-    var name by remember { mutableStateOf("Loading...") }
-    var phoneNumber by remember { mutableStateOf("Loading...") }
-    var isLoading by remember { mutableStateOf(true) }
     var showAdminLogin by remember { mutableStateOf(false) }
     var adminKey by remember { mutableStateOf("") }
     var keyError by remember { mutableStateOf(false) }
 
+    // Get User ID
+    val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
+
+    // Using ViewModel
+    val viewModel: SettingsViewModel = viewModel()
+
+    // Observing ViewModel Status
+    val name by viewModel.name.observeAsState("Loading...")
+    val phoneNumber by viewModel.phoneNumber.observeAsState("Loading...")
+    val isLoading by viewModel.isLoading.observeAsState(true)
+
     // Loading User Data
     LaunchedEffect(userId) {
-        coroutineScope.launch {
-            try {
-                val patient = repository.getPatientById(userId)
-                if (patient != null) {
-                    name = patient.name ?: "Unknown"
-                    phoneNumber = patient.phoneNumber ?: "Unknown"
-                } else {
-                    name = "User not found"
-                    phoneNumber = "User not found"
-                }
-                isLoading = false
-            } catch (e: Exception) {
-                name = "Loading Error"
-                phoneNumber = "Loading Error"
-                isLoading = false
-            }
-        }
+        viewModel.loadUserData(userId)
     }
 
     Scaffold(
