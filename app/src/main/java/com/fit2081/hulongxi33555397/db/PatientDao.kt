@@ -15,7 +15,7 @@ interface PatientDao {
     suspend fun insert(patient: Patient)
 
     @Update
-    suspend fun updatePatient(patient: Patient)
+    suspend fun updatePatient(patient: Patient): Int
 
     @Query("SELECT * FROM patients WHERE userId = :userId")
     suspend fun getPatientById(userId: String): Patient?
