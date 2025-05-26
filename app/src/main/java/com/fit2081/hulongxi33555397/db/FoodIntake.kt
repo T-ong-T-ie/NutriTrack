@@ -15,11 +15,11 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("patientId")]  // 索引外键以提高查询效率
+    indices = [Index("patientId")]  // Index foreign keys
 )
 data class FoodIntake(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val patientId: String,  // 外键关联Patient表，确保类型为String
+    val patientId: String,  // The foreign key is associated with the Patient table and the type is String
     val categories: String,
     val persona: String,
     val biggestMealTime: String,

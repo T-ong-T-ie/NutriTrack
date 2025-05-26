@@ -7,7 +7,7 @@ import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
 
-// Entity 类
+// Entity Class
 @Entity(tableName = "nutricoach_tips")
 data class NutriCoachTip(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
@@ -18,7 +18,7 @@ data class NutriCoachTip(
     val imageUrl: String? = null
 )
 
-// DAO 接口
+// DAO Interface
 @Dao
 interface NutriCoachTipDao {
     @Insert

@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.filled.Spa
+import androidx.compose.material.icons.outlined.Spa
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -46,17 +48,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 创建仓库并初始化数据库
+        // Create the repository and initialize the database
         val repository = NutritrackRepository(this)
 
-        // 在协程中导入数据
+        // Importing data into a coroutine
         lifecycleScope.launch(Dispatchers.IO) {
             val count = repository.patientCount()
             if (count == 0) {
                 val importedCount = repository.importPatientsFromCsv()
-                Log.d("MainActivity", "已从CSV导入 $importedCount 条患者数据")
+                Log.d("MainActivity", "Imported $importedCount individual patient data from CSV")
             } else {
-                Log.d("MainActivity", "数据库中已有 $count 条患者数据")
+                Log.d("MainActivity", "There are already $count patient data in the database")
             }
         }
         setContent {
@@ -69,7 +71,7 @@ class MainActivity : ComponentActivity() {
                     val prefs = context.getSharedPreferences("NutriTrackPrefs", Context.MODE_PRIVATE)
                     val isLoggedIn = prefs.getBoolean("is_logged_in", false)
 
-                    // 初始路由 - 如果已登录则为home，否则为welcome
+                    // Initial route - home if logged in, welcome otherwise
                     val startRoute = if (isLoggedIn) "home" else "welcome"
 
                     MainContent(startDestination = startRoute)
@@ -104,24 +106,24 @@ fun MainContent(startDestination: String) {
         ),
         BottomNavItem(
             title = "Nutricoach",
-            selectedIcon = { Icon(Icons.Filled.Person, contentDescription = "Nutricoach") },
-            unselectedIcon = { Icon(Icons.Outlined.Person, contentDescription = "Nutricoach") },
+            selectedIcon = { Icon(Icons.Filled.Spa, contentDescription = "Nutricoach") },
+            unselectedIcon = { Icon(Icons.Outlined.Spa, contentDescription = "Nutricoach") },
             route = "nutricoach"
         ),
         BottomNavItem(
             title = "Settings",
-            selectedIcon = { Icon(Icons.Filled.Person, contentDescription = "Settings") },
-            unselectedIcon = { Icon(Icons.Outlined.Person, contentDescription = "Settings") },
+            selectedIcon = { Icon(Icons.Filled.Settings, contentDescription = "Settings") },
+            unselectedIcon = { Icon(Icons.Outlined.Settings, contentDescription = "Settings") },
             route = "settings"
         )
     )
 
-    // 跟踪底部导航栏是否应该显示
+    // Keep track of whether the bottom navigation bar should be displayed
     var shouldShowBottomBar by remember { mutableStateOf(false) }
 
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     shouldShowBottomBar = when (currentRoute) {
-        "home", "insights", "nutricoach", "settings" -> true
+        "home", "insights", "nutricoach", "settings", "admin_view" -> true
         else -> false
     }
 
@@ -137,17 +139,17 @@ fun MainContent(startDestination: String) {
             startDestination = startDestination,
             modifier = Modifier.padding(paddingValues)
         ) {
-            // 欢迎屏幕
+            // Welcome screen
             composable("welcome") {
                 WelcomeScreen(navController = navController)
             }
 
-            // 登录屏幕
+            // Login screen
             composable("login") {
                 LoginScreen(navController = navController)
             }
 
-            // 问卷屏幕
+            // Questionnaire screen
             composable(
                 route = "questionnaire?isEdit={isEdit}",
                 arguments = listOf(
@@ -161,24 +163,29 @@ fun MainContent(startDestination: String) {
                 QuestionnaireScreen(navController = navController, isEdit = isEdit)
             }
 
-            // 主页
+            // home
             composable("home") {
                 HomeScreen(navController = navController)
             }
 
-            // 洞察页面
+            // InsightsScreen
             composable("insights") {
                 InsightsScreen(navController = navController)
             }
 
-            // 设置页面
+            // SettingScreen
             composable("settings") {
                 SettingScreen(navController = navController)
             }
 
-            // 营养教练页面
+            // NutriCoachScreen
             composable("nutricoach") {
                 NutriCoachScreen(navController = navController)
+            }
+
+            // AdminViewScreen
+            composable("admin_view") {
+                AdminViewScreen(navController = navController)
             }
         }
     }
@@ -199,13 +206,12 @@ fun BottomNavBar(navController: NavController, items: List<BottomNavItem>) {
                 selected = isSelected,
                 onClick = {
                     navController.navigate(item.route) {
-                        // 避免创建多个副本
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
                         }
-                        // 避免同一目的地多次入栈
+                        // Avoid multiple pushes to the same destination
                         launchSingleTop = true
-                        // 恢复状态
+                        // Restore status
                         restoreState = true
                     }
                 }

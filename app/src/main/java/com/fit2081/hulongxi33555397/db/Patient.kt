@@ -8,7 +8,7 @@ data class Patient(
     @PrimaryKey val userId: String,
     val phoneNumber: String,
     var name: String?,
-    var password: String?,  // 添加密码字段
+    var password: String?,
     val sex: String,
     var fruitScore: Float = 0f,
     val heifaTotalScoreMale: Float,

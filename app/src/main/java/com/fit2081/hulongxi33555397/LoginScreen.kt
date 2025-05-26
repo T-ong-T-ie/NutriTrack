@@ -30,7 +30,7 @@ fun LoginScreen(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     val repository = remember { NutritrackRepository(context) }
 
-    // 登录状态管理
+    // Login status management
     var userId by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -83,7 +83,7 @@ fun LoginScreen(navController: NavController) {
                     }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = "Back"
                         )
                     }
                 }

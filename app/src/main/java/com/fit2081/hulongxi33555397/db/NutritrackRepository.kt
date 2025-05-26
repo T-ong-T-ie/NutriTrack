@@ -12,7 +12,7 @@ class NutritrackRepository(private val context: Context) {
     private val foodIntakeDao = database.foodIntakeDao()
     private val nutriCoachTipDao = database.nutriCoachTipDao()
 
-    // 从CSV文件导入患者数据
+    // Import patient data from a CSV file
     suspend fun importPatientsFromCsv(): Int {
         return withContext(Dispatchers.IO) {
             try {
@@ -28,74 +28,74 @@ class NutritrackRepository(private val context: Context) {
         }
     }
 
-    // 检查数据库是否为空
+    // Check if the database is empty
     suspend fun patientCount(): Int {
         return withContext(Dispatchers.IO) {
             patientDao.getPatientCount()
         }
     }
 
-    // 获取所有患者
+    // Get all the patients
     suspend fun getAllPatients(): List<Patient> {
         return withContext(Dispatchers.IO) {
             patientDao.getAllPatients()
         }
     }
 
-    // 保存问卷回答
+    // Saving the questionnaire responses
     suspend fun saveFoodIntake(foodIntake: FoodIntake): Long {
         return withContext(Dispatchers.IO) {
             foodIntakeDao.insert(foodIntake)
         }
     }
 
-    // 获取患者的最新问卷回答
+    // The latest questionnaire responses from the patients were obtained
     suspend fun getLatestFoodIntake(patientId: String): FoodIntake? {
         return withContext(Dispatchers.IO) {
             foodIntakeDao.getLatestByPatientId(patientId)
         }
     }
 
-    // 获取患者信息
+    // Getting patient information
     suspend fun getPatientById(userId: String): Patient? {
         return withContext(Dispatchers.IO) {
             patientDao.getPatientById(userId)
         }
     }
 
-    // 用户认证
+    // User authentication
     suspend fun authenticateUser(userId: String, password: String): Patient? {
         return withContext(Dispatchers.IO) {
             patientDao.authenticateUser(userId, password)
         }
     }
 
-    // 更新用户信息
+    // Updating user information
     suspend fun updatePatient(patient: Patient) {
         withContext(Dispatchers.IO) {
             patientDao.updatePatient(patient)
         }
     }
 
-    // 添加提示
+    // Adding tips
     suspend fun saveTip(tip: NutriCoachTip): Long {
         return nutriCoachTipDao.insertTip(tip)
     }
 
-    // 获取用户的所有提示
+    // Get all the tips from the user
     suspend fun getUserTips(userId: String): List<NutriCoachTip> {
         return nutriCoachTipDao.getTipsForUser(userId)
     }
 
-    // 从UserData创建Patient对象
+    // Create a Patient object from UserData
     suspend fun createPatientFromUserData(userData: com.fit2081.hulongxi33555397.UserData): Patient? {
         return withContext(Dispatchers.IO) {
             try {
                 val patient = Patient(
                     userId = userData.userId,
                     phoneNumber = userData.phoneNumber,
-                    name = null, // 将由用户设置
-                    password = null, // 将由用户设置
+                    name = null, // Will be set by the user
+                    password = null, // Will be set by the user
                     sex = userData.sex,
                     heifaTotalScoreMale = userData.heifaTotalScoreMale,
                     heifaTotalScoreFemale = userData.heifaTotalScoreFemale,
@@ -135,18 +135,18 @@ class NutritrackRepository(private val context: Context) {
         }
     }
 
-    // 从CSV数据创建新用户
+    // Create new users from CSV data
     suspend fun createPatientFromCsv(userId: String, phoneNumber: String): Patient? {
         return withContext(Dispatchers.IO) {
             try {
-                // 使用现有的loadUserDataFromCsv工具函数
+                // Use the existing loadUserDataFromCsv utility function
                 val userData = loadUserDataFromCsv(context, userId)
                 if (userData != null) {
                     val patient = Patient(
                         userId = userData.userId,
                         phoneNumber = userData.phoneNumber,
-                        name = null, // 将由用户设置
-                        password = null, // 将由用户设置
+                        name = null, // Will be set by the user
+                        password = null, // Will be set by the user
                         sex = userData.sex,
                         heifaTotalScoreMale = userData.heifaTotalScoreMale,
                         heifaTotalScoreFemale = userData.heifaTotalScoreFemale,
@@ -188,18 +188,18 @@ class NutritrackRepository(private val context: Context) {
         }
     }
 
-    // 从CSV文件加载患者数据
+    // Load patient data from a CSV file
     private fun loadPatientsFromCsv(): List<Patient> {
         val patients = mutableListOf<Patient>()
         try {
             context.assets.open("users.csv").use { inputStream ->
                 val reader = BufferedReader(inputStream.reader())
 
-                // 读取表头行
+                // Read the header row
                 val headers = reader.readLine().split(",")
                 val columnMap = headers.withIndex().associate { it.value to it.index }
 
-                // 逐行读取并解析数据
+                // Read and parse data line by line
                 var line: String?
                 while (reader.readLine().also { line = it } != null) {
                     val columns = line?.split(",") ?: continue
@@ -213,8 +213,8 @@ class NutritrackRepository(private val context: Context) {
                         val patient = Patient(
                             userId = userId,
                             phoneNumber = phoneNumber,
-                            name = null, // CSV没有Name字段，设为null
-                            password = null, // 初始导入时密码为null
+                            name = null, // CSV has no Name field, set it to null
+                            password = null, // The password is null during initial import.
                             sex = sex,
                             heifaTotalScoreMale = columns[columnMap["HEIFAtotalscoreMale"] ?: 3].toFloatOrNull() ?: 0f,
                             heifaTotalScoreFemale = columns[columnMap["HEIFAtotalscoreFemale"] ?: 4].toFloatOrNull() ?: 0f,

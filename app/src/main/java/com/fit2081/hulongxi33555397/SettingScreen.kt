@@ -27,15 +27,18 @@ fun SettingScreen(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     val repository = remember { NutritrackRepository(context) }
 
-    // 获取用户ID
+    // Get User ID
     val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
 
-    // 从数据库获取用户信息
+    // 从Get user information from database
     var name by remember { mutableStateOf("Loading...") }
     var phoneNumber by remember { mutableStateOf("Loading...") }
     var isLoading by remember { mutableStateOf(true) }
+    var showAdminLogin by remember { mutableStateOf(false) }
+    var adminKey by remember { mutableStateOf("") }
+    var keyError by remember { mutableStateOf(false) }
 
-    // 加载用户数据
+    // Loading User Data
     LaunchedEffect(userId) {
         coroutineScope.launch {
             try {
@@ -58,9 +61,6 @@ fun SettingScreen(navController: NavController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Settings") }
-            )
         }
     ) { padding ->
         Column(
@@ -70,7 +70,15 @@ fun SettingScreen(navController: NavController) {
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // 用户信息卡片
+            Text(
+                text = "Settings",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // User Information Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -164,9 +172,9 @@ fun SettingScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Clinician Login Button
+            // Admin Login Button
             OutlinedButton(
-                onClick = { /* 暂不实现功能 */ },
+                onClick = { showAdminLogin = true },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -178,18 +186,18 @@ fun SettingScreen(navController: NavController) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.Person,
-                        contentDescription = "Clinician Login"
+                        contentDescription = "Admin View"
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "Clinician Login",
+                        text = "Admin View",
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
             }
         }
 
-        // 退出登录确认对话框
+        // Logout confirmation dialog
         if (showLogoutDialog) {
             AlertDialog(
                 onDismissRequest = { showLogoutDialog = false },
@@ -198,12 +206,12 @@ fun SettingScreen(navController: NavController) {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            // 清除登录状态
+                            // Clear login status
                             with(prefs.edit()) {
                                 putBoolean("is_logged_in", false)
                                 apply()
                             }
-                            // 导航到欢迎页面
+                            // Navigate to the Welcome page
                             navController.navigate("welcome") {
                                 popUpTo("home") { inclusive = true }
                             }
@@ -216,6 +224,63 @@ fun SettingScreen(navController: NavController) {
                 dismissButton = {
                     TextButton(onClick = { showLogoutDialog = false }) {
                         Text("No")
+                    }
+                }
+            )
+        }
+
+        // Admin Login Dialog Box
+        if (showAdminLogin) {
+            AlertDialog(
+                onDismissRequest = {
+                    showAdminLogin = false
+                    adminKey = ""
+                    keyError = false
+                },
+                title = { Text("Clinician Validation") },
+                text = {
+                    Column {
+                        if (keyError) {
+                            Text(
+                                "Incorrect authentication key",
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                        OutlinedTextField(
+                            value = adminKey,
+                            onValueChange = {
+                                adminKey = it
+                                keyError = false
+                            },
+                            label = { Text("Enter the verification key") },
+                            singleLine = true,
+                            isError = keyError
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            if (adminKey == "dollar-entry-apples") {
+                                showAdminLogin = false
+                                adminKey = ""
+                                navController.navigate("admin_view")
+                            } else {
+                                keyError = true
+                            }
+                        }
+                    ) {
+                        Text("Verify")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showAdminLogin = false
+                        adminKey = ""
+                        keyError = false
+                    }) {
+                        Text("Cancel")
                     }
                 }
             )

@@ -77,7 +77,7 @@ fun WelcomeScreen(navController: NavController) {
             onClick = { navController.navigate("login") },
             modifier = Modifier.fillMaxWidth(0.8f)
         ) {
-            Text(if (isLoggedIn) "切换账号登录" else "登录")
+            Text(if (isLoggedIn) "Switch account login" else "Login")
         }
 
         Spacer(modifier = Modifier.height(16.dp))

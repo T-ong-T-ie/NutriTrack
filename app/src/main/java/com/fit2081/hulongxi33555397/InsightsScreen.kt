@@ -36,11 +36,11 @@ fun InsightsScreen(navController: NavController) {
 
     val userId = prefs.getString("user_id", "Unknown") ?: "Unknown"
 
-    // 从数据库获取用户数据
+    // Obtain user data from the database
     var patientData by remember { mutableStateOf<com.fit2081.hulongxi33555397.db.Patient?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // 加载用户数据
+    // Load user data
     LaunchedEffect(userId) {
         coroutineScope.launch {
             try {
