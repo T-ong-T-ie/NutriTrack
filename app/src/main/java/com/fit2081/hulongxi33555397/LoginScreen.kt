@@ -37,6 +37,7 @@ fun LoginScreen(navController: NavController) {
     val foodIntake by viewModel.foodIntake.observeAsState()
     val registrationSuccess by viewModel.registrationSuccess.observeAsState()
     val isUserRegistered by viewModel.isUserRegistered.observeAsState(false)
+    val hasCompletedQuestionnaire by viewModel.hasCompletedQuestionnaire.observeAsState(false)
 
     // Local UI Status
     var errorMessage by remember { mutableStateOf("") }
@@ -53,21 +54,22 @@ fun LoginScreen(navController: NavController) {
 
 
     LaunchedEffect(registrationSuccess) {
-        android.util.Log.d("LoginScreen", "LaunchedEffect trigger，registrationSuccess=$registrationSuccess")
-
         if (registrationSuccess == true) {
-            android.util.Log.d("LoginScreen", "Registration is successful, ready to navigate to the questionnaire page")
-
-            // Mandatory navigation
             with(prefs.edit()) {
                 putBoolean("is_logged_in", true)
                 putString("user_id", userId)
                 apply()
             }
 
-            // Navigate to the questionnaire page
-            navController.navigate("questionnaire") {
-                popUpTo("login") { inclusive = true }
+            // Directly determine navigation based on the questionnaire completion status
+            if (hasCompletedQuestionnaire == true) {
+                navController.navigate("home") {
+                    popUpTo("login") { inclusive = true }
+                }
+            } else {
+                navController.navigate("questionnaire") {
+                    popUpTo("login") { inclusive = true }
+                }
             }
         }
     }
